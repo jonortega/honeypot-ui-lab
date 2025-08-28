@@ -1,6 +1,5 @@
 # HoneypotUiLab — Honeypot de baja interacción con dashboard
-
-> **Asignatura (ficción):** Seguridad de Sistemas y Redes  
+ 
 > **Repositorio:** `honeypot-ui-lab`
 > **Demo local rápida:** ver sección **3. Guía de ejecución**
 
@@ -49,7 +48,7 @@
 ``` mermaid
 flowchart LR
   A[Internet] -->|conexiones reales| B[Servicio Honeypot<br/>SSH o HTTP]
-  B --> C[Collector / Normalizador]
+  B --> C[Collector/<br/>Normalizador]
   C --> D[(SQLite)]
   D --> E[API REST<br/>read-only]
   E --> F[Dashboard<br/>Next.js]
