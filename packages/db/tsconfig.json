@@ -2,7 +2,11 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "dist",
-        "module": "NodeNext"
+        "module": "NodeNext",
+        "types": [
+            "node",
+            "better-sqlite3"
+        ]
     },
     "include": [
         "src"

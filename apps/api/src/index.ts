@@ -15,7 +15,7 @@ app.get("/api/secure-ping", (req, res) => {
   res.json({ pong: true });
 });
 
-const port = Number(process.env.PORT ?? 3000);
+const port = Number(process.env.API_PORT ?? 3000);
 app.listen(port, () => {
   console.log(`[api] listening on http://localhost:${port}`);
 });
