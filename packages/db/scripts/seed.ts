@@ -1,5 +1,5 @@
-import { bootstrap, insertEvent } from "./index.js";
-import type { EventInsert } from "./types.js";
+import { bootstrap, insertEvent } from "../src/index.js";
+import type { EventInsert } from "../src/types.js";
 
 const path = process.env.HNY_DB_PATH || "../../data/events.db";
 

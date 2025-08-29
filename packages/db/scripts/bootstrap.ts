@@ -1,4 +1,4 @@
-import { bootstrap } from "./index.js";
+import { bootstrap } from "../src/index.js";
 
 const path = process.env.HNY_DB_PATH || "../../data/events.db";
 bootstrap(path);
