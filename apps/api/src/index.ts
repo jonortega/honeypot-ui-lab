@@ -1,4 +1,4 @@
-import "dotenv/config";
+import * as dotenv from "dotenv";
 import express from "express";
 import { getEvents, countEvents, getStatsSummary } from "../../../packages/db/src/index.js";
 import { toInt, parseIso, parseService } from "./validation/validation.js";
@@ -16,14 +16,16 @@ app.disable("x-powered-by"); // menos fingerprinting
 app.use(express.json({ limit: "100kb", strict: true })); // no aceptamos bodies grandes (solo GETs)
 
 // Cargar .env.local desde la raíz del repo
-import * as dotenv from "dotenv";
 dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
 
 // Env (acepta variantes con typos para no romper en local)
 const ROOT_DIR = path.resolve(__dirname, "../../..");
 const DB_PATH = path.resolve(ROOT_DIR, process.env.HNY_DB_PATH || "data/events.db");
-const ADMIN_TOKEN = process.env.HNY_ADMIN_TOKEN || "change-me";
 const DASHBOARD_ORIGIN = process.env.DASHBOARD_BASE_URL || process.env.BASHBOARD_BASE_URL || "";
+const ADMIN_TOKEN = process.env.HNY_ADMIN_TOKEN;
+if (!ADMIN_TOKEN || ADMIN_TOKEN.length < 24) {
+  throw new Error("HNY_ADMIN_TOKEN is required and must be >= 24 chars");
+}
 
 // CORS mínimo (sin dependencia extra)
 app.use((req, res, next) => {
