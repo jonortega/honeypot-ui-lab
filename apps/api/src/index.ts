@@ -1,26 +1,29 @@
 import "dotenv/config";
 import express from "express";
-import {
-  getEvents,
-  countEvents,
-  getStatsSummary,
-} from "../../../packages/db/src/index.js";
+import { getEvents, countEvents, getStatsSummary } from "../../../packages/db/src/index.js";
 import { toInt, parseIso, parseService } from "./validation/validation.js";
 import { makeAuthRequired } from "./middleware/auth.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// __dirname shim para ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // --- Config básica ---
 const app = express();
 app.disable("x-powered-by"); // menos fingerprinting
 app.use(express.json({ limit: "100kb", strict: true })); // no aceptamos bodies grandes (solo GETs)
 
+// Cargar .env.local desde la raíz del repo
+import * as dotenv from "dotenv";
+dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
+
 // Env (acepta variantes con typos para no romper en local)
-const DB_PATH = process.env.HNY_DB_PATH || "./data/events.db";
-const ADMIN_TOKEN =
-  process.env.HNY_ADMIN_TOKEN ||
-  process.env.HNY_ANDMIN_TOKEN || // fallback por si hay typo
-  "change-me";
-const DASHBOARD_ORIGIN =
-  process.env.DASHBOARD_BASE_URL || process.env.BASHBOARD_BASE_URL || "";
+const ROOT_DIR = path.resolve(__dirname, "../../..");
+const DB_PATH = path.resolve(ROOT_DIR, process.env.HNY_DB_PATH || "data/events.db");
+const ADMIN_TOKEN = process.env.HNY_ADMIN_TOKEN || "change-me";
+const DASHBOARD_ORIGIN = process.env.DASHBOARD_BASE_URL || process.env.BASHBOARD_BASE_URL || "";
 
 // CORS mínimo (sin dependencia extra)
 app.use((req, res, next) => {
@@ -29,10 +32,7 @@ app.use((req, res, next) => {
     if (origin && origin === DASHBOARD_ORIGIN) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Authorization, Content-Type"
-      );
+      res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
       res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
     }
   }
@@ -52,14 +52,21 @@ app.get("/health", (_req, res) => {
 // --- GET /api/events ---
 // Lista paginada + total filtrado. Usa getEvents() y countEvents().
 app.get("/api/events", authRequired, (req, res) => {
+  console.log("[api] GET /api/events", {
+    ip: req.ip,
+    service: req.query.service,
+    from: req.query.from,
+    to: req.query.to,
+    limit: req.query.limit,
+    offset: req.query.offset,
+    userAgent: req.headers["user-agent"],
+  });
+
   // 1) Validar/sanear query
   const limit = toInt(req.query.limit, 50, { min: 1, max: 10_000 }); // el clamp real se hace en la capa DB
   const offset = toInt(req.query.offset, 0, { min: 0, max: 100_000_000 });
   const service = parseService(req.query.service);
-  const ip =
-    typeof req.query.ip === "string" && req.query.ip.length <= 255
-      ? req.query.ip
-      : undefined;
+  const ip = typeof req.query.ip === "string" && req.query.ip.length <= 255 ? req.query.ip : undefined;
   const from = parseIso(req.query.from);
   const to = parseIso(req.query.to);
 
@@ -113,17 +120,10 @@ app.use((_req, res) => {
 });
 
 // --- Error handler (mensaje genérico, log interno) ---
-app.use(
-  (
-    err: unknown,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction
-  ) => {
-    console.error("[api:error]", err);
-    res.status(500).json({ error: "internal_error" });
-  }
-);
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("[api:error]", err);
+  res.status(500).json({ error: "internal_error" });
+});
 
 // --- Arranque ---
 const port = Number(process.env.API_PORT ?? 3000);
