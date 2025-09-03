@@ -1,0 +1,6 @@
+# Claves SSH falsas para el honeypot
+host.key
+host.key.pub
+
+# Capturas o dumps temporales
+captures/
