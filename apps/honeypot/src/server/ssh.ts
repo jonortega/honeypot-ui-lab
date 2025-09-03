@@ -1,5 +1,6 @@
 import { createRequire } from "module";
 import { readFileSync } from "fs";
+import { resolve } from "path";
 import { handleEvent } from "../collector/collector.js";
 import { getConfig } from "../config.js";
 import type { Connection, AuthContext } from "ssh2";
@@ -9,14 +10,29 @@ const cjsRequire = createRequire(import.meta.url);
 const { Server } = cjsRequire("ssh2");
 
 export function startSSHServer() {
-  const { HNY_PORT } = getConfig();
+  const { HNY_PORT, HNY_HOST_KEY_PATH } = getConfig();
 
-  const server = new Server({ hostKeys: [cjsRequire("fs").readFileSync("host.key")] }, (client: Connection) => {
+  const keyPath = resolve(process.cwd(), HNY_HOST_KEY_PATH);
+  let hostKey: Buffer;
+  try {
+    hostKey = readFileSync(keyPath);
+  } catch (e) {
+    console.error(`[hp/ssh] No se pudo leer la clave de host en ${keyPath}.
+Genera una con:
+  ssh-keygen -t rsa -b 2048 -m PEM -f ${HNY_HOST_KEY_PATH} -N "" 
+y vuelve a ejecutar.`);
+    process.exit(1);
+  }
+
+  const server = new Server({ hostKeys: [hostKey] }, (client: Connection) => {
     const srcIp = (client as any)._sock?.remoteAddress;
     const srcPort = (client as any)._sock?.remotePort;
 
+    console.log(`[hp/ssh] Cliente conectado desde ${srcIp}:${srcPort}`);
+
     client.on("authentication", (ctx: AuthContext) => {
       console.log(`[hp/ssh] Intento de login user=${ctx.username} from ${srcIp}:${srcPort}`);
+
       // Crear evento y pasarlo al collector
       handleEvent({
         ts_utc: new Date().toISOString(),
@@ -35,6 +51,6 @@ export function startSSHServer() {
   });
 
   server.listen(HNY_PORT, "0.0.0.0", () => {
-    console.log(`SSH honeypot escuchando en puerto ${HNY_PORT}`);
+    console.log(`[hp/ssh] SSH honeypot escuchando en puerto ${HNY_PORT}`);
   });
 }
