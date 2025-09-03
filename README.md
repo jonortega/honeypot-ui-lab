@@ -1,44 +1,45 @@
 # HoneypotUiLab — Honeypot de baja interacción con dashboard
- 
-> **Repositorio:** `honeypot-ui-lab`
-> **Demo local rápida:** ver sección **3. Guía de ejecución**
 
----
+> **Repositorio:** `honeypot-ui-lab`  
+> **Demo local rápida:** ver sección **3. Guía de ejecución**
 
 ## Tabla de contenidos
 
-1. [Descripción](#1-descripción)
-2. [Arquitectura](#2-arquitectura)
-3. [Guía de ejecución](#3-guía-de-ejecución)
-4. [Demo](#4-demo)
-5. [API](#5-api)
-6. [Esquema de datos](#6-esquema-de-datos)
-7. [Seguridad](#7-seguridad)
-8. [Tests](#8-tests)
-9. [Roadmap](#9-roadmap)
-10. [Licencia y créditos](#10-licencia-y-créditos)
-11. [Decisiones explícitas del alumno](#11-decisiones-explícitas-del-alumno)
+1. [Descripción](#1-descripción)  
+2. [Arquitectura](#2-arquitectura)  
+3. [Guía de ejecución](#3-guía-de-ejecución)  
+4. [Demo](#4-demo)  
+5. [API](#5-api)  
+6. [Esquema de datos](#6-esquema-de-datos)  
+7. [Seguridad](#7-seguridad)  
+8. [Tests](#8-tests)  
+9. [Roadmap](#9-roadmap)  
+10. [Licencia y créditos](#10-licencia-y-créditos)  
+11. [Decisiones explícitas del alumno](#11-decisiones-explícitas-del-alumno)  
 12. [Apéndices](#apéndices)
 
----
 
 ## 1) Descripción
 
 ### 1.1 Descripción general
-
+Este proyecto implementa un **honeypot de baja interacción** capaz de simular un servicio expuesto (SSH o HTTP) para registrar intentos de intrusión. Los eventos se almacenan en **SQLite** y se consultan mediante una **API read-only**, que a su vez alimenta un **dashboard web** (Next.js) con métricas y gráficas.
 
 ### 1.2 Motivación
-
+El objetivo es practicar y demostrar competencias en:
+- **Ciberseguridad práctica (blue team):** captura y análisis básico de intentos de intrusión.
+- **Ingeniería de software:** diseño modular, testing, CI/CD, despliegue contenedorizado.
+- **Linux & redes:** servicios expuestos de forma controlada, puertos y sockets, firewall mínimo.
+- **Buenas prácticas:** seguridad, ética y documentación clara.
 
 ### 1.3 Objetivos
 
 **Objetivos del MVP (checklist):**
-- [ ] Captura de eventos reales/sintéticos.
-- [ ] Persistencia en SQLite.
-- [ ] API read-only con auth por token.
-- [ ] Dashboard con gráficas y tabla.
-- [ ] Contenedorización reproducible.
-- [ ] Tests básicos + CI.
+- [x] Captura de eventos reales/sintéticos.  
+- [x] Persistencia en SQLite.  
+- [x] API read-only con auth por token.  
+- [x] Dashboard con gráficas y tabla.  
+- [x] Contenedorización reproducible.  
+- [x] Tests básicos + CI.  
 
 
 ## 2) Arquitectura
@@ -58,12 +59,10 @@ flowchart LR
 ## 3) Guía de ejecución
 
 ### 3.1 Requisitos
-
-- **Docker** y **Docker Compose** instalados. 
-- Recursos mínimos: _Núcleos, RAM, disco_ (placeholder).
+- **Docker** y **Docker Compose** instalados.
+- Recursos mínimos: 2 núcleos, 2 GB RAM, 1 GB disco.
 
 ### 3.2 Variables de entorno
-
 Crea un fichero `.env` en la raíz a partir de este ejemplo:
 
 ``` bash
@@ -81,71 +80,56 @@ DASHBOARD_BASE_URL=http://localhost:3001
 **Con Docker Compose (recomendado):**
 
 ``` bash
-# 1) Construir e iniciar
 docker compose up -d --build
-
-# 2) Ver logs (cualquiera de los servicios)
 docker compose logs -f honeypot
 docker compose logs -f api
 docker compose logs -f dashboard
-
-# 3) Parar
 docker compose down
 ```
 
 **Con Make (opcional):**
 
 ``` bash
-make dev        # entorno de desarrollo
-make demo       # demo rápida con datos sintéticos
-make test       # ejecutar tests
+make dev
+make demo
+make test
 ```
 
 **Endpoints (por defecto):**
-- **API:** `http://localhost:3000` (o `BASE_API_URL`)  
-- **Dashboard:** `http://localhost:3001` (o `DASHBOARD_BASE_URL`)  
-- **Honeypot:** puerto `HNY_PORT` publicado (expuesto según docker-compose)
+- API: `http://localhost:3000`
+- Dashboard: `http://localhost:3001`
+- Honeypot: puerto configurado en `HNY_PORT`
 
 
 ## 4) Demo
 
 ### 4.1 Generar eventos de prueba
 
-**Si el servicio es HTTP:**
-
+**HTTP:**
 ``` bash
-# Ejemplo: intento de login falso
 curl -i -X POST "http://localhost:8080/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"123456"}'
 ```
 
-**Si el servicio es SSH:**
-
+**SSH:**
 ``` bash
-# Intenta conectar al puerto del honeypot (no abrirá shell real)
 ssh -p 2222 root@localhost
-# Probar diversas credenciales y observar logs
 ```
 
 ### 4.2 Ver el dashboard
-
-- Abre `http://localhost:3001` y revisa:
-  - **Gráficas**: intentos por día, top IPs, top usernames/paths.  
-  - **Tabla**: últimos N eventos (búsqueda/orden básico).
-
-*(Inserta capturas o GIFs aquí cuando estén listos.)*
+Abrir `http://localhost:3001`:
+- Gráficas: intentos por día, top IPs, top usernames/paths.
+- Tabla: últimos eventos (con búsqueda y ordenación).
 
 
 ## 5) API
 
-> **Auth:** enviar `Authorization: Bearer <HNY_ADMIN_TOKEN>` en cada petición.
+> **Auth:** enviar `Authorization: Bearer <HNY_ADMIN_TOKEN>`.
 
 ### 5.1 Endpoints
 
-- `GET /api/stats/summary`  
-  **Descripción:** métricas agregadas (totales, por día, top IPs, etc.).  
-  **Respuesta (ejemplo mínima):**
+- `GET /api/stats/summary`
 
 ``` json
 {
@@ -157,9 +141,7 @@ ssh -p 2222 root@localhost
 }
 ```
 
-- `GET /api/events?limit=50&offset=0&service=ssh|http&ip=...&from=...&to=...`  
-  **Descripción:** eventos paginados con filtros básicos.  
-  **Respuesta (ejemplo mínima):**
+- `GET /api/events?limit=50&offset=0&service=ssh|http&ip=...&from=...&to=...`
 
 ``` json
 {
@@ -168,43 +150,35 @@ ssh -p 2222 root@localhost
 }
 ```
 
-### 5.2 Ejemplos de uso (curl)
+### 5.2 Ejemplos de uso
 
 ``` bash
-# Summary
-curl -s \
-  -H "Authorization: Bearer $HNY_ADMIN_TOKEN" \
+curl -s -H "Authorization: Bearer $HNY_ADMIN_TOKEN" \
   "$BASE_API_URL/api/stats/summary"
 
-# Eventos (paginado + filtro por servicio)
-curl -s \
-  -H "Authorization: Bearer $HNY_ADMIN_TOKEN" \
+curl -s -H "Authorization: Bearer $HNY_ADMIN_TOKEN" \
   "$BASE_API_URL/api/events?limit=50&offset=0&service=http"
 ```
-
-*(Añade códigos de estado de error y mensajes una vez implementado.)*
 
 
 ## 6) Esquema de datos
 
-**Tabla principal `events` (SQLite):**
-
 ``` sql
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ts_utc TEXT NOT NULL,          -- ISO 8601
+  ts_utc TEXT NOT NULL,
   src_ip TEXT NOT NULL,
   src_port INTEGER,
-  service TEXT NOT NULL,         -- 'ssh' | 'http'
-  username TEXT,                 -- ssh
-  password TEXT,                 -- ssh (opcional)
-  http_method TEXT,              -- http
-  http_path TEXT,                -- http
-  http_status INTEGER,           -- http (si simulas respuesta)
-  user_agent TEXT,               -- http
-  raw JSON,                      -- campos extra según servicio (limitado)
-  country TEXT,                  -- pro (GeoIP)
-  asn TEXT                       -- pro (GeoIP)
+  service TEXT NOT NULL,
+  username TEXT,
+  password TEXT,
+  http_method TEXT,
+  http_path TEXT,
+  http_status INTEGER,
+  user_agent TEXT,
+  raw JSON,
+  country TEXT,
+  asn TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts_utc);
@@ -212,105 +186,93 @@ CREATE INDEX IF NOT EXISTS idx_events_ip ON events(src_ip);
 CREATE INDEX IF NOT EXISTS idx_events_service ON events(service);
 ```
 
-*(Agrega diagramas de relaciones si añades más tablas.)*
-
 
 ## 7) Seguridad
 
-**Principios (resumen):**
-- Baja interacción: **no** ejecutar binarios ni comandos de atacante.
-- Mínimos privilegios: procesos sin root dentro de contenedores.
-- Exponer **solo** el puerto del honeypot.
-- Retención limitada: define plazos (p. ej., 30–90 días) y política de purga.
-- **Ética y legalidad:** uso didáctico, sin contraataques ni escaneos de vuelta.
-- Privacidad: almacenar solo metadatos técnicos necesarios.
-
-*(Detallar headers de seguridad si habilitas reverse proxy/TLS en Pro.)*
+- Honeypot de **baja interacción** (no ejecutar binarios ni comandos).
+- Procesos sin root en contenedores.
+- Solo se expone el puerto honeypot.
+- Retención limitada: se documentará (30–90 días).
+- Uso exclusivamente didáctico y ético.
 
 
 ## 8) Tests
 
-**Tipos de prueba:**
-- **Unitarias:** parser/normalizador de eventos, validadores.  
-- **Integración:** levantar servicio y generar 2–3 eventos; verificar persistencia y API.  
-- **E2E (opcional):** `docker compose` en CI.
-
-**Cómo ejecutarlos:**
+**Tipos:**
+- Unitarias (parser, normalizador, validadores).
+- Integración (eventos sintéticos → API).
+- E2E opcional en CI con Docker.
 
 ``` bash
-# Lint + unit + integration
 npm run lint
 npm test
-
-# E2E opcional (si aplica)
-npm run test:e2e
 ```
 
-**Cobertura (placeholder):** _inserta badge/report cuando esté._
+Errores frecuentes corregidos durante el desarrollo:
+- Variables de entorno mal definidas (`.env.local`).
+- Problemas de compatibilidad con Next.js 15 y Jest.
+- Configuración de CI/CD con GitHub Actions + Vercel.
+- Manejo correcto de `searchParams` en App Router.
 
 
 ## 9) Roadmap
 
-**MVP (cierre):**
-- [ ] Todos los requisitos de MVP marcados en la sección 1.
+### MVP (cerrado)
+✔ Captura de eventos, almacenamiento en SQLite, API con token, dashboard básico, contenedores, CI/CD y tests.
 
-**Pro (elige ≥5):**
-- [ ] Multi-servicio (SSH + HTTP / +Telnet/FTP falsos).  
-- [ ] GeoIP (país/ASN).  
-- [ ] Alertas (Discord/Slack) ante umbrales.  
-- [ ] `/metrics` Prometheus.  
-- [ ] Mapa de ataques por país en el dashboard.  
-- [ ] Filtros avanzados en UI.  
-- [ ] Exportación CSV/NDJSON; (opcional) integración ELK.  
-- [ ] Rate-limit & WAF light en API/dashboard.  
-- [ ] TLS tras reverse proxy + CSP/HSTS.  
-- [ ] Despliegue reproducible (Terraform + Ansible).  
-- [ ] Logs firmados / hash chain.  
-- [ ] Panel “acciones rápidas” (bloqueo IP simulado/real).
-
-*(Añade issues/enlaces a tareas cuando existan.)*
+### Pro (pendiente)
+- [ ] Multi-servicio (SSH + HTTP)
+- [ ] GeoIP (país/ASN)
+- [ ] Alertas (Discord/Slack)
+- [ ] Endpoint `/metrics` (Prometheus)
+- [ ] Mapa de ataques en dashboard
+- [ ] Exportación CSV/NDJSON
+- [ ] Rate-limit + WAF ligero
+- [ ] TLS con reverse proxy
+- [ ] Despliegue infra (Terraform + Ansible)
+- [ ] Logs firmados / hash chain
 
 
 ## 10) Licencia y créditos
 
-- **Licencia:** _elige y enlaza (MIT/Apache-2.0/GPL-3.0/…)._  
-- **Créditos / Agradecimientos:**  
-  - Librerías y assets relevantes (enlaces).  
-  - Inspiración/recursos consultados.
+- **Licencia:** MIT (pendiente confirmación).  
+- **Créditos:** librerías usadas (`ssh2`, `better-sqlite3`, `Next.js`, `Recharts`).
 
 
 ## 11) Decisiones explícitas del alumno
 
-> Explica brevemente **qué** has elegido y **por qué**.
-
-- **Servicio MVP:** ☐ SSH ☐ HTTP — _justificación breve (p. ej., complejidad, tipo de eventos)._  
-- **Arquitectura:** ☐ Monolito ☐ Servicios separados — _criterios: simplicidad, despliegue, mantenimiento._  
-- **Paquetes/librerías:** _lista corta + por qué (rendimiento, DX, compatibilidad)._  
-- **Retención de logs y límites:** _p. ej., 60 días; rotación/tamaño máx. del fichero; procedimiento de purga._
+- **Servicio MVP:** SSH con `ssh2`. Se eligió por generar eventos más ricos (user/pass, cliente).  
+- **Arquitectura:** servicios separados (honeypot, api, dashboard) dentro de un monorepo con `pnpm workspaces`.  
+- **Despliegue:** Docker + Docker Compose. CI/CD en GitHub Actions (lint/test/build) y despliegue en Vercel para el dashboard.  
+- **Paquetes:**  
+  - Honeypot: `ssh2` (modo servidor).  
+  - API: Express + `better-sqlite3`.  
+  - Dashboard: Next.js 15 (App Router), Recharts.  
+- **Logs:** SQLite con rotación documentada. Retención estimada: 60 días.  
 
 
 ## Apéndices
 
-### A) Estructura del repositorio (sugerida)
+### A) Estructura del repositorio
 
 ``` bash
 honeypot-ui-lab/
 ├─ apps/
-│  ├─ honeypot/            # servicio (ssh|http) + collector
-│  ├─ api/                 # API REST read-only
-│  └─ dashboard/           # Next.js (App Router)
+│  ├─ honeypot/            
+│  ├─ api/                 
+│  └─ dashboard/           
 ├─ packages/
-│  ├─ db/                  # schema y cliente sqlite
-│  └─ common/              # tipos compartidos
+│  ├─ db/                  
+│  └─ common/              
 ├─ docker/
-│  └─ Dockerfile.*         # imágenes por servicio
+│  └─ Dockerfile.*         
 ├─ docker-compose.yml
 ├─ .env.example
 ├─ Makefile
 └─ README.md
 ```
 
-### B) docker-compose (esqueleto mínimo)
+### B) docker-compose (esqueleto)
 
 ``` yaml
 
@@ -321,4 +283,3 @@ honeypot-ui-lab/
 ``` yaml
 
 ```
-
