@@ -1,15 +1,21 @@
-import { Server } from "ssh2";
-import { handleEvent } from "../collector/collector";
-import { getConfig } from "../config";
+import { createRequire } from "module";
+import { readFileSync } from "fs";
+import { handleEvent } from "../collector/collector.js";
+import { getConfig } from "../config.js";
+import type { Connection, AuthContext } from "ssh2";
+
+// Cargar módulo CommonJS desde ESM
+const cjsRequire = createRequire(import.meta.url);
+const { Server } = cjsRequire("ssh2");
 
 export function startSSHServer() {
   const { HNY_PORT } = getConfig();
 
-  const server = new Server({ hostKeys: [require("fs").readFileSync("host.key")] }, (client, info) => {
+  const server = new Server({ hostKeys: [cjsRequire("fs").readFileSync("host.key")] }, (client: Connection) => {
     const srcIp = (client as any)._sock?.remoteAddress;
     const srcPort = (client as any)._sock?.remotePort;
 
-    client.on("authentication", (ctx) => {
+    client.on("authentication", (ctx: AuthContext) => {
       console.log(`[hp/ssh] Intento de login user=${ctx.username} from ${srcIp}:${srcPort}`);
       // Crear evento y pasarlo al collector
       handleEvent({
