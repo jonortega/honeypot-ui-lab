@@ -37,7 +37,13 @@ export function Header() {
             <span className='font-mono'>{currentTime.toLocaleTimeString()}</span>
           </div>
 
-          <Button variant='outline' size='sm' onClick={handleRefresh} disabled={isLoading}>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className='hover:bg-accent/10 hover:text-accent hover:border-accent transition-smooth bg-transparent'
+          >
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Refresh
           </Button>

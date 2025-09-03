@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, Activity, Globe, Settings, AlertTriangle } from "lucide-react";
+import { Shield, Activity, Globe, Settings, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHealth } from "@/hooks/use-api";
 
@@ -12,18 +12,30 @@ const navigation = [
   { name: "Settings", icon: Settings, current: false },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { data: health } = useHealth();
 
   return (
-    <div className='w-64 bg-sidebar border-r border-sidebar-border flex flex-col'>
+    <div
+      className={cn(
+        "bg-sidebar border-r border-sidebar-border flex flex-col transition-smooth",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
       <div className='p-6'>
         <div className='flex items-center space-x-2'>
-          <Shield className='h-8 w-8 text-sidebar-accent' />
-          <div>
-            <h1 className='text-lg font-semibold text-sidebar-foreground'>Honeypot</h1>
-            <p className='text-sm text-sidebar-foreground/60'>Dashboard</p>
-          </div>
+          <Shield className='h-8 w-8 text-accent flex-shrink-0' />
+          {!collapsed && (
+            <div>
+              <h1 className='text-lg font-semibold text-sidebar-foreground'>Honeypot</h1>
+              <p className='text-sm text-sidebar-foreground/60'>Dashboard</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -33,29 +45,41 @@ export function Sidebar() {
             key={item.name}
             href='#'
             className={cn(
-              "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+              "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-smooth",
               item.current
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-sidebar-accent-foreground"
+                ? "bg-accent text-accent-foreground shadow-sm"
+                : "text-sidebar-foreground hover:bg-accent/10 hover:text-accent hover:shadow-sm"
             )}
           >
             <item.icon
               className={cn(
-                "mr-3 h-5 w-5 flex-shrink-0",
-                item.current
-                  ? "text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground"
+                "h-5 w-5 flex-shrink-0 transition-smooth",
+                collapsed ? "mr-0" : "mr-3",
+                item.current ? "text-accent-foreground" : "text-sidebar-foreground/60 group-hover:text-accent"
               )}
             />
-            {item.name}
+            {!collapsed && item.name}
           </a>
         ))}
       </nav>
 
       <div className='p-4 border-t border-sidebar-border'>
-        <div className='flex items-center space-x-2'>
+        <button
+          onClick={onToggle}
+          className='w-full flex items-center justify-center p-2 rounded-md text-sidebar-foreground/60 hover:text-accent hover:bg-accent/10 transition-smooth'
+        >
+          {collapsed ? <ChevronRight className='h-4 w-4' /> : <ChevronLeft className='h-4 w-4' />}
+        </button>
+      </div>
+
+      <div className='p-4 border-t border-sidebar-border'>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
           <div className={cn("h-2 w-2 rounded-full", health?.ok ? "bg-accent" : "bg-destructive")} />
-          <span className='text-sm text-sidebar-foreground/60'>{health?.ok ? "System Online" : "System Offline"}</span>
+          {!collapsed && (
+            <span className='text-sm text-sidebar-foreground/60'>
+              {health?.ok ? "System Online" : "System Offline"}
+            </span>
+          )}
         </div>
       </div>
     </div>

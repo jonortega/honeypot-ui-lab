@@ -45,7 +45,7 @@ export function StatsOverview() {
       title: "Total Events",
       value: formatNumber(totalEvents),
       icon: Shield,
-      color: "text-chart-1",
+      color: "text-accent",
     },
     {
       title: "Today's Events",
@@ -72,10 +72,15 @@ export function StatsOverview() {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
       {statCards.map((stat) => (
-        <Card key={stat.title}>
+        <Card
+          key={stat.title}
+          className='hover:shadow-lg hover:shadow-accent/5 hover:border-accent/20 transition-smooth cursor-pointer group'
+        >
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>{stat.title}</CardTitle>
-            <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            <CardTitle className='text-sm font-medium text-muted-foreground group-hover:text-accent transition-smooth'>
+              {stat.title}
+            </CardTitle>
+            <stat.icon className={`h-4 w-4 ${stat.color} group-hover:scale-110 transition-smooth`} />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-card-foreground'>{stat.value}</div>
