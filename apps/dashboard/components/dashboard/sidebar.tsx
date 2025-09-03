@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, Activity, Globe, Settings, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Shield, Activity, Globe, Settings, AlertTriangle, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHealth } from "@/hooks/use-api";
 
@@ -45,7 +45,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             key={item.name}
             href='#'
             className={cn(
-              "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-smooth",
+              "group flex items-center text-sm font-medium rounded-md transition-smooth relative",
+              collapsed ? "px-2 py-3 justify-center" : "px-3 py-2",
               item.current
                 ? "bg-accent text-accent-foreground shadow-sm"
                 : "text-sidebar-foreground hover:bg-accent/10 hover:text-accent hover:shadow-sm"
@@ -54,7 +55,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <item.icon
               className={cn(
                 "h-5 w-5 flex-shrink-0 transition-smooth",
-                collapsed ? "mr-0" : "mr-3",
+                collapsed ? "" : "mr-3",
                 item.current ? "text-accent-foreground" : "text-sidebar-foreground/60 group-hover:text-accent"
               )}
             />
@@ -66,15 +67,26 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className='p-4 border-t border-sidebar-border'>
         <button
           onClick={onToggle}
-          className='w-full flex items-center justify-center p-2 rounded-md text-sidebar-foreground/60 hover:text-accent hover:bg-accent/10 transition-smooth'
+          className={cn(
+            "flex items-center justify-center rounded-md text-sidebar-foreground/60 hover:text-accent hover:bg-accent/10 transition-smooth",
+            collapsed ? "w-8 h-8 mx-auto" : "w-full p-2"
+          )}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <ChevronRight className='h-4 w-4' /> : <ChevronLeft className='h-4 w-4' />}
+          {collapsed ? (
+            <Menu className='h-4 w-4' />
+          ) : (
+            <>
+              <X className='h-4 w-4 mr-2' />
+              <span className='text-sm'>Collapse</span>
+            </>
+          )}
         </button>
       </div>
 
       <div className='p-4 border-t border-sidebar-border'>
         <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
-          <div className={cn("h-2 w-2 rounded-full", health?.ok ? "bg-accent" : "bg-destructive")} />
+          <div className={cn("h-2 w-2 rounded-full transition-colors", health?.ok ? "bg-success" : "bg-destructive")} />
           {!collapsed && (
             <span className='text-sm text-sidebar-foreground/60'>
               {health?.ok ? "System Online" : "System Offline"}

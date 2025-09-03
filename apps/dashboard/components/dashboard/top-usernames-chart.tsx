@@ -40,14 +40,14 @@ export function TopUsernamesChart() {
   }));
 
   return (
-    <Card>
+    <Card className='hover:shadow-lg transition-shadow'>
       <CardHeader>
-        <CardTitle>Top Usernames</CardTitle>
+        <CardTitle className='text-foreground'>Top Usernames</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width='100%' height={300}>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' />
+            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' opacity={0.3} />
             <XAxis
               dataKey='username'
               stroke='hsl(var(--muted-foreground))'
@@ -55,18 +55,30 @@ export function TopUsernamesChart() {
               angle={-45}
               textAnchor='end'
               height={80}
+              tick={{ fill: "hsl(var(--muted-foreground))" }}
             />
-            <YAxis stroke='hsl(var(--muted-foreground))' fontSize={12} />
+            <YAxis
+              stroke='hsl(var(--muted-foreground))'
+              fontSize={12}
+              tick={{ fill: "hsl(var(--muted-foreground))" }}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
+                backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-                color: "hsl(var(--popover-foreground))",
+                borderRadius: "8px",
+                color: "hsl(var(--card-foreground))",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }}
               formatter={(value, name, props) => [value, "Attempts", props.payload?.fullUsername]}
+              labelStyle={{ color: "hsl(var(--card-foreground))" }}
             />
-            <Bar dataKey='attempts' fill='hsl(var(--chart-3))' radius={[4, 4, 0, 0]} />
+            <Bar
+              dataKey='attempts'
+              fill='hsl(var(--chart-3))'
+              radius={[4, 4, 0, 0]}
+              className='hover:opacity-80 transition-opacity'
+            />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

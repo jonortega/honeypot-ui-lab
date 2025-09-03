@@ -40,26 +40,45 @@ export function TopPathsChart() {
   }));
 
   return (
-    <Card>
+    <Card className='hover:shadow-lg transition-shadow'>
       <CardHeader>
-        <CardTitle>Top Attack Paths</CardTitle>
+        <CardTitle className='text-foreground'>Top Attack Paths</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width='100%' height={300}>
           <BarChart data={chartData} layout='horizontal'>
-            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' />
-            <XAxis type='number' stroke='hsl(var(--muted-foreground))' fontSize={12} />
-            <YAxis type='category' dataKey='path' stroke='hsl(var(--muted-foreground))' fontSize={12} width={120} />
+            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' opacity={0.3} />
+            <XAxis
+              type='number'
+              stroke='hsl(var(--muted-foreground))'
+              fontSize={12}
+              tick={{ fill: "hsl(var(--muted-foreground))" }}
+            />
+            <YAxis
+              type='category'
+              dataKey='path'
+              stroke='hsl(var(--muted-foreground))'
+              fontSize={12}
+              width={120}
+              tick={{ fill: "hsl(var(--muted-foreground))" }}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
+                backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-                color: "hsl(var(--popover-foreground))",
+                borderRadius: "8px",
+                color: "hsl(var(--card-foreground))",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }}
               formatter={(value, name, props) => [value, "Attempts", props.payload?.fullPath]}
+              labelStyle={{ color: "hsl(var(--card-foreground))" }}
             />
-            <Bar dataKey='attempts' fill='hsl(var(--chart-4))' radius={[0, 4, 4, 0]} />
+            <Bar
+              dataKey='attempts'
+              fill='hsl(var(--chart-4))'
+              radius={[0, 4, 4, 0]}
+              className='hover:opacity-80 transition-opacity'
+            />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

@@ -42,31 +42,47 @@ export function AttacksChart() {
   }));
 
   return (
-    <Card>
+    <Card className='hover:shadow-lg transition-shadow'>
       <CardHeader>
-        <CardTitle>Attacks Over Time</CardTitle>
+        <CardTitle className='text-foreground'>Attacks Over Time</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width='100%' height={300}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' />
-            <XAxis dataKey='date' stroke='hsl(var(--muted-foreground))' fontSize={12} />
-            <YAxis stroke='hsl(var(--muted-foreground))' fontSize={12} />
+            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' opacity={0.3} />
+            <XAxis
+              dataKey='date'
+              stroke='hsl(var(--muted-foreground))'
+              fontSize={12}
+              tick={{ fill: "hsl(var(--muted-foreground))" }}
+            />
+            <YAxis
+              stroke='hsl(var(--muted-foreground))'
+              fontSize={12}
+              tick={{ fill: "hsl(var(--muted-foreground))" }}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
+                backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-                color: "hsl(var(--popover-foreground))",
+                borderRadius: "8px",
+                color: "hsl(var(--card-foreground))",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }}
+              labelStyle={{ color: "hsl(var(--card-foreground))" }}
             />
             <Line
               type='monotone'
               dataKey='attacks'
               stroke='hsl(var(--chart-1))'
-              strokeWidth={2}
-              dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, stroke: "hsl(var(--chart-1))", strokeWidth: 2 }}
+              strokeWidth={3}
+              dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2, r: 5 }}
+              activeDot={{
+                r: 7,
+                stroke: "hsl(var(--chart-1))",
+                strokeWidth: 2,
+                fill: "hsl(var(--background))",
+              }}
             />
           </LineChart>
         </ResponsiveContainer>
