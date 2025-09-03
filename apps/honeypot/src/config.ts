@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
+import { resolve } from "path";
 
-dotenv.config();
+dotenv.config({ path: resolve(process.cwd(), ".env.local") });
 
 type ServiceType = "ssh" | "http";
 
@@ -21,7 +22,7 @@ export function getConfig(): Config {
     HNY_SERVICE = "ssh",
     HNY_PORT = "22",
     HNY_DB_PATH = "../../data/honeypot.db",
-    HNY_HOST_KEY_PATH = "./apps/honeypot/host.key",
+    HNY_HOST_KEY_PATH = "./host.key",
     HNY_ADMIN_TOKEN,
   } = process.env;
 
