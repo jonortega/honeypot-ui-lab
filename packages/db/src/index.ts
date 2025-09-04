@@ -5,36 +5,23 @@ import type { StatsSummary } from "../../common/src/types.js";
 // Valores seguros por defecto y maximos para paginacion en getEvents()
 export const API_EVENTS_DEFAULT_LIMIT = Math.max(
   1,
-  Math.min(
-    Number.parseInt(process.env.HNY_API_EVENTS_DEFAULT_LIMIT ?? "", 10) || 50,
-    1000
-  )
+  Math.min(Number.parseInt(process.env.HNY_API_EVENTS_DEFAULT_LIMIT ?? "", 10) || 50, 1000)
 );
 
 export const API_EVENTS_MAX_LIMIT = Math.max(
   API_EVENTS_DEFAULT_LIMIT,
-  Math.min(
-    Number.parseInt(process.env.HNY_API_EVENTS_MAX_LIMIT ?? "", 10) || 200,
-    5000
-  )
+  Math.min(Number.parseInt(process.env.HNY_API_EVENTS_MAX_LIMIT ?? "", 10) || 200, 5000)
 );
 
 // Límites para TOP-* del summary
 export const API_STATS_TOP_DEFAULT_LIMIT = Math.max(
   1,
-  Math.min(
-    Number.parseInt(process.env.HNY_API_STATS_TOP_DEFAULT_LIMIT ?? "", 10) ||
-      10,
-    100
-  )
+  Math.min(Number.parseInt(process.env.HNY_API_STATS_TOP_DEFAULT_LIMIT ?? "", 10) || 10, 100)
 );
 
 export const API_STATS_TOP_MAX_LIMIT = Math.max(
   API_STATS_TOP_DEFAULT_LIMIT,
-  Math.min(
-    Number.parseInt(process.env.HNY_API_STATS_TOP_MAX_LIMIT ?? "", 10) || 50,
-    200
-  )
+  Math.min(Number.parseInt(process.env.HNY_API_STATS_TOP_MAX_LIMIT ?? "", 10) || 50, 200)
 );
 
 // Crea/asegura el esquema de SQLite (events + indices) para arrancar el sistema
@@ -84,6 +71,7 @@ export function bootstrap(dbPath: string): void {
 
 // Inserta un evento normalizado en 'events' y devuelve el id autoincremental insertado
 export function insertEvent(dbPath: string, ev: EventInsert) {
+  console.log(`[db/insertEvent] Insertando evento en ${dbPath}`);
   const db = new Database(dbPath);
   const stmt = db.prepare(`
     INSERT INTO events (
@@ -309,20 +297,11 @@ export function getStatsSummary(
   // --- saneo inputs ---
   const isoRegex = /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z)?$/;
 
-  const service =
-    opts?.service === "ssh" || opts?.service === "http"
-      ? opts.service
-      : undefined;
+  const service = opts?.service === "ssh" || opts?.service === "http" ? opts.service : undefined;
 
-  const from =
-    typeof opts?.from === "string" && isoRegex.test(opts.from)
-      ? opts.from
-      : undefined;
+  const from = typeof opts?.from === "string" && isoRegex.test(opts.from) ? opts.from : undefined;
 
-  const to =
-    typeof opts?.to === "string" && isoRegex.test(opts.to)
-      ? opts.to
-      : undefined;
+  const to = typeof opts?.to === "string" && isoRegex.test(opts.to) ? opts.to : undefined;
 
   // rango incoherente → devolver vacío
   if (from && to && from > to) {
@@ -335,8 +314,7 @@ export function getStatsSummary(
     };
   }
 
-  const topLimitRaw =
-    typeof opts?.topLimit === "number" ? Math.floor(opts!.topLimit!) : NaN;
+  const topLimitRaw = typeof opts?.topLimit === "number" ? Math.floor(opts!.topLimit!) : NaN;
   const topLimit =
     Number.isFinite(topLimitRaw) && topLimitRaw > 0
       ? Math.min(topLimitRaw, API_STATS_TOP_MAX_LIMIT)
@@ -364,12 +342,10 @@ export function getStatsSummary(
   const db = new Database(dbPath, { readonly: true });
   try {
     // 1) totalEvents
-    const totalRow = db
-      .prepare(`SELECT COUNT(*) AS count FROM events${whereClause}`)
-      .get(params) as { count?: number } | undefined;
-    const totalEvents = Number.isFinite(totalRow?.count as number)
-      ? Number(totalRow!.count)
-      : 0;
+    const totalRow = db.prepare(`SELECT COUNT(*) AS count FROM events${whereClause}`).get(params) as
+      | { count?: number }
+      | undefined;
+    const totalEvents = Number.isFinite(totalRow?.count as number) ? Number(totalRow!.count) : 0;
 
     // 2) byDay
     const byDayRows = db
@@ -395,9 +371,7 @@ export function getStatsSummary(
         `
         SELECT src_ip AS v, COUNT(*) AS c
         FROM events
-        ${whereClause}${
-          whereClause ? " AND" : " WHERE"
-        } src_ip IS NOT NULL AND src_ip <> ''
+        ${whereClause}${whereClause ? " AND" : " WHERE"} src_ip IS NOT NULL AND src_ip <> ''
         GROUP BY v
         ORDER BY c DESC, v ASC
         LIMIT @topLimit
@@ -416,9 +390,7 @@ export function getStatsSummary(
         `
         SELECT username AS v, COUNT(*) AS c
         FROM events
-        ${whereClause}${
-          whereClause ? " AND" : " WHERE"
-        } username IS NOT NULL AND username <> ''
+        ${whereClause}${whereClause ? " AND" : " WHERE"} username IS NOT NULL AND username <> ''
         GROUP BY v
         ORDER BY c DESC, v ASC
         LIMIT @topLimit
@@ -437,9 +409,7 @@ export function getStatsSummary(
         `
         SELECT http_path AS v, COUNT(*) AS c
         FROM events
-        ${whereClause}${
-          whereClause ? " AND" : " WHERE"
-        } http_path IS NOT NULL AND http_path <> ''
+        ${whereClause}${whereClause ? " AND" : " WHERE"} http_path IS NOT NULL AND http_path <> ''
         GROUP BY v
         ORDER BY c DESC, v ASC
         LIMIT @topLimit
@@ -480,10 +450,7 @@ export function getDbHealth(dbPath: string): {
     const userVersion = Number(db.pragma("user_version", { simple: true })); // versión de app/schema
     const integrity = String(db.pragma("integrity_check", { simple: true })); // "ok" si íntegra
 
-    const ok =
-      integrity.toLowerCase() === "ok" &&
-      Number.isFinite(pageSize) &&
-      Number.isFinite(userVersion);
+    const ok = integrity.toLowerCase() === "ok" && Number.isFinite(pageSize) && Number.isFinite(userVersion);
 
     return {
       ok,

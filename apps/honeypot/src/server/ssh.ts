@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { handleEvent } from "../collector/collector.js";
 import { getConfig } from "../config.js";
-import type { Connection, AuthContext } from "ssh2";
+import type { Connection, AuthContext, AuthenticationType } from "ssh2";
 
 // Cargar módulo CommonJS desde ESM
 const cjsRequire = createRequire(import.meta.url);
@@ -32,6 +32,14 @@ y vuelve a ejecutar.`);
 
     client.on("authentication", (ctx: AuthContext) => {
       console.log(`[hp/ssh] Intento de login user=${ctx.username} from ${srcIp}:${srcPort}`);
+
+      // Anuncia que solo aceptas 'password'
+      const onlyPassword = ["password"] as const;
+
+      if (ctx.method !== "password") {
+        ctx.reject(onlyPassword as unknown as AuthenticationType[]);
+        return;
+      }
 
       // Crear evento y pasarlo al collector
       handleEvent({

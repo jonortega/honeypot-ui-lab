@@ -31,18 +31,6 @@ Este proyecto nace de mi interés por aprender cómo se diseña y despliega un h
 
 Me interesa reforzar conceptos de **ingeniería de software**: diseño limpio, despliegue reproducible con un solo comando, integración de CI/CD, pruebas y documentación. Busco demostrar que no solo sé programar, sino que tengo una **visión completa de todo el ciclo de desarrollo**, desde la captura de datos hasta la visualización en un dashboard. Para lograrlo necesito aplicar gestión, planificación y seguimiento, asegurando que las distintas fases del proyecto estén conectadas.
 
-### 1.3 Objetivos
-
-**Estado actual del desarrollo:**
-- [x] Desarrollo de funciones de I/O con la base de datos SQLite.  
-- [x] API que lee desde la DB de forma segura y expone los endpoints principales.  
-- [x] Primera versión del dashboard en Next.js, consumiendo la API y mostrando datos reales de la DB.  
-- [ ] Desarrollo del servicio honeypot _(Actualmente solo scripts que insertan datos en la DB)_.  
-- [ ] Tests unitarios, de integración y E2E _(Por ahora solo hay comprobaciones manuales)_.
-- [ ] Configuración de CI/CD _(planificado, aún no implementado)_.  
-- [ ] Contenerización con Docker y despliegue en VPS _(pendiente)_.  
-
-
 
 ## 2) Arquitectura
 
@@ -70,15 +58,28 @@ Crea un fichero `.env` en la raíz a partir de este ejemplo:
 
 ``` bash
 # .env.local
-HNY_SERVICE=ssh              # o http
-HNY_PORT=22                  # 22 si ssh, 80/8080 si http
-HNY_DB_PATH=./data/events.db
-HNY_ADMIN_TOKEN=change-me
-BASE_API_URL=http://api:3000
-DASHBOARD_BASE_URL=http://localhost:3001
+
 ```
 
-### 3.3 Puesta en marcha (local)
+### 3.3 Generar la clave de host SSH (obligatoria)
+Desde `apps/honeypot/`:
+
+INICIO BLOQUE bash
+ssh-keygen -t rsa -b 2048 -m PEM -f host.key -N ""
+chmod 600 host.key
+# Añadido a .gitignore local: host.key y host.key.pub
+FIN BLOQUE CODIGO
+
+### 3.4 Arranque (desarrollo)
+Desde la **raíz del repo**:
+
+INICIO BLOQUE bash
+pnpm -w --filter honeypot dev
+# Salida esperada:
+# [hp/ssh] SSH honeypot escuchando en puerto 2222
+FIN BLOQUE CODIGO
+
+### 3.4 Puesta en marcha (local)
 
 **Con Docker Compose:**
 
@@ -241,19 +242,38 @@ Durante el desarrollo se han identificado y resuelto varios problemas:
 - **Compatibilidad Next.js + Jest**: algunos errores al configurar tests en App Router (Next.js 15). Se solucionó mapeando módulos correctamente y usando queries accesibles (`findByRole` en lugar de `findByText` en diálogos).  
 - **Problemas con `searchParams` en tests**: se corrigió usando `Promise.resolve({ timeRange: "short_term" })` para igualar tipos.  
 - **CI/CD inicial**: dificultades en GitHub Actions para ejecutar Next.js y testear antes del despliegue. Se ajustó el workflow para lanzar el servidor (`pnpm start &`) antes de correr los tests.  
+- **Import CJS (`ssh2`) en proyecto ESM:** error `does not provide an export named 'Server'`.  
+  **Solución:** configurar TypeScript con `module: "NodeNext"`, `moduleResolution: "NodeNext"`, habilitar `esModuleInterop` y usar `import ssh2 from "ssh2"` (namespace) o `createRequire(import.meta.url)`.
+
+- **Extensiones en imports ESM:** con `NodeNext`, los imports relativos requieren **extensión `.js`** en tiempo de ejecución.  
+  **Solución:** actualizar imports internos (`../config.js`, `../collector/collector.js`).
+
+- **Clave de host ausente:** `ENOENT: open 'host.key'`.  
+  **Solución:** generación guiada de `host.key` y lectura vía `HNY_HOST_KEY_PATH` con mensaje de error claro si falta.
+
+- **Permisos al abrir puerto 22:** `EACCES` en Linux y colisión con `sshd`.  
+  **Solución:** usar **puerto alto (p. ej. 2222)** en dev (`HNY_PORT=2222`).
+
+- **Carga de `.env.local`:** inicialmente solo se leía `.env`.  
+  **Solución:** el servicio carga **`.env.local`** explícitamente en la raíz del repo.
+
+- **Resolución de ruta a la DB:** los paths relativos se resuelven frente a `process.cwd()`.  
+  **Solución:** normalización a **ruta absoluta** en el collector y creación de directorio si no existe.
+
+- **Múltiples eventos por conexión:** clientes SSH suelen probar varios métodos (`none`, `publickey`, `keyboard-interactive`, `password`) en una misma conexión.  
+  **Solución adoptada:** registrar cada intento de autenticación (comportamiento actual). *(Se puede filtrar en el futuro si se desea.)*
 
 
 
 ## 10) Roadmap
 
 ### Próximas tareas (pendientes de MVP)
-- [ ] Implementar servicio honeypot real (SSH o HTTP).  
-- [ ] Integrar collector con la DB.  
+- [ ] Implementar servicio honeypot HTTP.  
 - [ ] Añadir tests unitarios, de integración y E2E.  
 - [ ] Configurar CI/CD en GitHub Actions con pnpm.  
 - [ ] Crear Dockerfiles para honeypot, API y dashboard.  
 - [ ] Probar despliegue local completo con Docker Compose.  
-- [ ] Preparar despliegue en VPS (cuando se disponga).  
+- [ ] Preparar despliegue en VPS.  
 
 ### Futuro (nivel Pro)
 - [ ] Multi-servicio (SSH + HTTP).  
@@ -277,3 +297,9 @@ Durante el desarrollo se han identificado y resuelto varios problemas:
 - **API con Node.js + SQLite**: enfoque simple y eficiente para persistencia. Se planteó `better-sqlite3` por rendimiento y sencillez.  
 - **Testing**: decidido integrar Jest para pruebas unitarias e integración, con GitHub Actions como CI. Se registraron bloqueos iniciales (Radix UI + accesibilidad, `searchParams`), ya documentados.  
 - **Despliegue**: estrategia progresiva → primero desarrollo local, luego contenerización con Docker, y finalmente despliegue en VPS. El dashboard se desplegará en Vercel en producción, mientras que el honeypot y la API estarán en la VPS.  
+- **ESM + TypeScript (`NodeNext`)** para backend, manteniendo compatibilidad con `ssh2` (CJS) mediante `esModuleInterop` / `createRequire`.
+- **Servicio SSH** de **baja interacción** con `ssh2.Server`, captura de `authentication` y rechazo sistemático.
+- **Collector como única vía de escritura** a la DB (normaliza/sanea y llama a `insertEvent(dbPath, ev)`).
+- **Configuración por `.env.local`** en la raíz: `HNY_SERVICE`, `HNY_PORT`, `HNY_DB_PATH`, `HNY_HOST_KEY_PATH`.
+- **Gestión de rutas**: normalización a absoluta para `HNY_DB_PATH`; recomendación de puerto alto en dev.
+- **Logs de consola** informativos (conexión y auth) sin ejecutar contenido del atacante.

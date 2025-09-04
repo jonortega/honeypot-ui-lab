@@ -1,7 +1,7 @@
-import { insertEvent } from "../../../../packages/db/src/index";
-import type { EventInsert } from "../../../../packages/db/src/types";
+import { insertEvent } from "../../../../packages/db/src/index.js";
+import type { EventInsert } from "../../../../packages/db/src/types.js";
 
-const dbPath = process.env.HNY_DB_PATH || "./data/events.db";
+const dbPath = process.env.HNY_DB_PATH || "../../data/events.db";
 
 export function handleEvent(ev: EventInsert) {
   try {
