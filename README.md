@@ -64,20 +64,20 @@ Crea un fichero `.env` en la raíz a partir de este ejemplo:
 ### 3.3 Generar la clave de host SSH (obligatoria)
 Desde `apps/honeypot/`:
 
-INICIO BLOQUE bash
+``` bash
 ssh-keygen -t rsa -b 2048 -m PEM -f host.key -N ""
 chmod 600 host.key
 # Añadido a .gitignore local: host.key y host.key.pub
-FIN BLOQUE CODIGO
+```
 
 ### 3.4 Arranque (desarrollo)
 Desde la **raíz del repo**:
 
-INICIO BLOQUE bash
+``` bash
 pnpm -w --filter honeypot dev
 # Salida esperada:
 # [hp/ssh] SSH honeypot escuchando en puerto 2222
-FIN BLOQUE CODIGO
+```
 
 ### 3.4 Puesta en marcha (local)
 
