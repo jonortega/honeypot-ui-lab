@@ -86,9 +86,9 @@ export function startHTTPServer() {
   // Ruta tentadora: login falso
   app.post("/login", (req, res) => {
     const user = typeof req.body?.username === "string" ? clamp(req.body.username, 64) : undefined;
-    const passLen = typeof req.body?.password === "string" ? req.body.password.length : 0;
-    console.log(`[hp/http] /login attempt ip=${clientIp(req)} user=${user ?? "-"} passLen=${passLen}`);
-    record(req, 401, { body: { username: user, password_len: passLen } });
+    const pass = typeof req.body?.password === "string" ? String(req.body.password) : undefined;
+    console.log(`[hp/http] /login attempt ip=${clientIp(req)} user=${user ?? "-"} password=${pass ?? "-"}`);
+    record(req, 401, { body: { username: user, password: pass } });
     res.status(401).send("Unauthorized");
   });
 
