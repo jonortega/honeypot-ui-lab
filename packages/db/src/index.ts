@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import type { EventInsert, EventRow } from "./types.js";
-import type { StatsSummary } from "../../common/src/types.js";
+import type { StatsSummary } from "./types.js";
 
 // Valores seguros por defecto y maximos para paginacion en getEvents()
 export const API_EVENTS_DEFAULT_LIMIT = Math.max(
@@ -468,3 +468,6 @@ export function getDbHealth(dbPath: string): {
     }
   }
 }
+
+export type { EventInsert, EventRow } from "./types.js";
+export type { StatsSummary, StatsTopItem, StatsByDayItem } from "./types.js";

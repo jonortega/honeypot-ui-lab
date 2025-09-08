@@ -1,0 +1,52 @@
+services:
+  honeypot:
+    build:
+      context: .
+      dockerfile: apps/honeypot/Dockerfile
+    container_name: honeypot
+    env_file:
+      - ./.env.compose
+      - ./apps/honeypot/.env
+    environment:
+      - HNY_RUNTIME=docker
+    ports:
+      - "2222:2222"
+      - "8080:8080"
+    volumes:
+      - db-data:/data
+    networks: [ingress]
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: api
+    env_file:
+      - ./.env.compose
+      - ./apps/api/.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - db-data:/data:ro
+    depends_on: [honeypot]
+    networks: [frontend]
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    container_name: dashboard
+    env_file:
+      - ./.env.compose
+      - ./apps/dashboard/.env.local
+    ports:
+      - "3001:3001"
+    depends_on: [api]
+    networks: [frontend]
+
+volumes:
+  db-data:
+
+networks:
+  ingress: {}
+  frontend: {}

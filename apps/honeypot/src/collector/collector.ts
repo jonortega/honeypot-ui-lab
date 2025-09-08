@@ -1,11 +1,12 @@
-import { insertEvent } from "../../../../packages/db/src/index.js";
-import type { EventInsert } from "../../../../packages/db/src/types.js";
+import { insertEvent } from "db";
+import type { EventInsert } from "db";
+import { getConfig } from "../config.js";
 
-const dbPath = process.env.HNY_DB_PATH || "../../data/events.db";
+const { HNY_DB_PATH } = getConfig();
 
 export function handleEvent(ev: EventInsert) {
   try {
-    insertEvent(dbPath, ev);
+    insertEvent(HNY_DB_PATH, ev);
     console.log("[hp/collector] Evento insertado:", ev);
   } catch (err) {
     console.error("[hp/collector] Error insertando evento", err);

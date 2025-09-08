@@ -1,7 +1,7 @@
-const API_BASE_URL = process.env.API_BASE_URL;
+const BASE_API_URL = process.env.BASE_API_URL;
 const API_TOKEN = process.env.HNY_ADMIN_TOKEN;
 
-if (!API_BASE_URL) {
+if (!BASE_API_URL) {
   throw new Error("BASE_API_URL is not set for dashboard server runtime");
 }
 if (!API_TOKEN) {
@@ -10,7 +10,7 @@ if (!API_TOKEN) {
 }
 
 export function upstreamUrl(path: string) {
-  return `${API_BASE_URL}${path}`;
+  return `${BASE_API_URL}${path}`;
 }
 
 export async function fetchUpstream(path: string, init?: RequestInit) {

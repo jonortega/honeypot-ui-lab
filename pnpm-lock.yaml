@@ -94,6 +94,9 @@ importers:
 
   apps/honeypot:
     dependencies:
+      db:
+        specifier: workspace:*
+        version: link:../../packages/db
       dotenv:
         specifier: ^17.2.1
         version: 17.2.1
