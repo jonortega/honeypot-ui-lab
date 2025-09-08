@@ -71,7 +71,11 @@ export function startHTTPServer() {
     res.status(400).send("Bad Request");
   });
 
-  app.listen(HNY_HTTP_PORT, "0.0.0.0", () => {
+  const httpServer = app.listen(HNY_HTTP_PORT, "0.0.0.0", () => {
     logHttp(`HTTP honeypot escuchando en puerto ${HNY_HTTP_PORT}`);
   });
+
+  httpServer.on("error", (err) => console.error("[hp/http] server error:", err));
+
+  return httpServer;
 }

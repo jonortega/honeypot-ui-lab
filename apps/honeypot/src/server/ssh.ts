@@ -14,7 +14,7 @@ export function startSSHServer() {
   const { HNY_SSH_PORT, HNY_HOST_KEY_PATH } = getConfig();
   const hostKey = loadHostKey(HNY_HOST_KEY_PATH);
 
-  const server = new Server({ hostKeys: [hostKey] }, (client: Connection) => {
+  const sshServer = new Server({ hostKeys: [hostKey] }, (client: Connection) => {
     const ip = srcIp(client);
     const port = srcPort(client);
     logSsh(`Cliente conectado desde ${ip}:${port}`);
@@ -37,7 +37,10 @@ export function startSSHServer() {
     client.on("end", () => {});
   });
 
-  server.listen(HNY_SSH_PORT, "0.0.0.0", () => {
+  sshServer.on("error", (err: any) => console.error("[hp/ssh] server error:", err));
+
+  sshServer.listen(HNY_SSH_PORT, "0.0.0.0", () => {
     logSsh(`SSH honeypot escuchando en puerto ${HNY_SSH_PORT}`);
   });
+  return sshServer;
 }

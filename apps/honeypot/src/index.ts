@@ -1,3 +1,4 @@
+// apps/honeypot/src/index.ts
 import { startSSHServer } from "./server/ssh.js";
 import { startHTTPServer } from "./server/http.js";
 import { getConfig } from "./config.js";
@@ -7,12 +8,14 @@ const services: Record<string, () => void> = {
   http: startHTTPServer,
 };
 
-const { HNY_SERVICE } = getConfig();
+const { HNY_SERVICES } = getConfig();
 
-const starter = services[HNY_SERVICE];
-if (starter) {
+for (const svc of HNY_SERVICES) {
+  const starter = services[svc];
+  if (!starter) {
+    console.error(`[hp] Servicio no soportado: ${svc}`);
+    process.exit(1);
+  }
+  console.log(`[hp] Iniciando servicio: ${svc}`);
   starter();
-} else {
-  console.error(`[hp] Servicio no soportado: ${HNY_SERVICE}`);
-  process.exit(1);
 }
