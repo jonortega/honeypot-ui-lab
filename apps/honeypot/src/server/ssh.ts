@@ -1,9 +1,10 @@
 import { createRequire } from "module";
-import { readFileSync } from "fs";
-import { resolve } from "path";
-import { handleEvent } from "../collector/collector.js";
-import { getConfig } from "../config.js";
 import type { Connection, AuthContext, AuthenticationType } from "ssh2";
+import { getConfig } from "../config.js";
+import { loadHostKey } from "./ssh/key.js";
+import { srcIp, srcPort } from "./ssh/net.js";
+import { logSsh } from "./ssh/utils.js";
+import { recordSsh } from "./ssh/recorder.js";
 
 // Cargar módulo CommonJS desde ESM
 const cjsRequire = createRequire(import.meta.url);
@@ -11,47 +12,25 @@ const { Server } = cjsRequire("ssh2");
 
 export function startSSHServer() {
   const { HNY_SSH_PORT, HNY_HOST_KEY_PATH } = getConfig();
-
-  const keyPath = resolve(process.cwd(), HNY_HOST_KEY_PATH);
-  let hostKey: Buffer;
-  try {
-    hostKey = readFileSync(keyPath);
-  } catch (e) {
-    console.error(`[hp/ssh] No se pudo leer la clave de host en ${keyPath}.
-Genera una con:
-  ssh-keygen -t rsa -b 2048 -m PEM -f ${HNY_HOST_KEY_PATH} -N "" 
-y vuelve a ejecutar.`);
-    process.exit(1);
-  }
+  const hostKey = loadHostKey(HNY_HOST_KEY_PATH);
 
   const server = new Server({ hostKeys: [hostKey] }, (client: Connection) => {
-    const srcIp = (client as any)._sock?.remoteAddress;
-    const srcPort = (client as any)._sock?.remotePort;
-
-    console.log(`[hp/ssh] Cliente conectado desde ${srcIp}:${srcPort}`);
+    const ip = srcIp(client);
+    const port = srcPort(client);
+    logSsh(`Cliente conectado desde ${ip}:${port}`);
 
     client.on("authentication", (ctx: AuthContext) => {
-      console.log(`[hp/ssh] Intento de login user=${ctx.username} from ${srcIp}:${srcPort}`);
+      logSsh(`Intento de login user=${ctx.username} from ${ip}:${port}`);
 
-      // Anuncia que solo aceptas 'password'
+      // Solo aceptamos/forzamos 'password'
       const onlyPassword = ["password"] as const;
-
       if (ctx.method !== "password") {
         ctx.reject(onlyPassword as unknown as AuthenticationType[]);
         return;
       }
 
-      // Crear evento y pasarlo al collector
-      handleEvent({
-        ts_utc: new Date().toISOString(),
-        src_ip: srcIp || "unknown",
-        src_port: srcPort,
-        service: "ssh",
-        username: ctx.username,
-        password: "password" in ctx ? ctx.password : undefined,
-        raw: JSON.stringify({ method: ctx.method }),
-      });
-      // Siempre rechazar
+      // Registrar evento y rechazar
+      recordSsh(client, ctx);
       ctx.reject();
     });
 
@@ -59,6 +38,6 @@ y vuelve a ejecutar.`);
   });
 
   server.listen(HNY_SSH_PORT, "0.0.0.0", () => {
-    console.log(`[hp/ssh] SSH honeypot escuchando en puerto ${HNY_SSH_PORT}`);
+    logSsh(`SSH honeypot escuchando en puerto ${HNY_SSH_PORT}`);
   });
 }
