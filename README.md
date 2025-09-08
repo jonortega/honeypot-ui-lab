@@ -4,7 +4,6 @@
 > **Demo local rápida:** ver sección **3. Guía de ejecución**
 
 
-
 ## Tabla de contenidos
 
 1. [Descripción](#1-descripción)  
@@ -18,7 +17,6 @@
 9. [Problemas y soluciones](#9-problemas-y-soluciones)  
 10. [Roadmap](#10-roadmap)  
 11. [Decisiones explícitas del alumno](#11-decisiones-explícitas-del-alumno)
-
 
 
 ## 1) Descripción
@@ -44,7 +42,6 @@ flowchart LR
   D --> E[API REST<br/>read-only]
   E --> F[Dashboard<br/>Next.js]
 ```
-
 
 
 ## 3) Guía de ejecución
@@ -97,7 +94,6 @@ docker compose down
 - Honeypot: puerto configurado en `HNY_PORT`  
 
 
-
 ## 4) Demo
 
 ### 4.1 Generar eventos de prueba
@@ -118,7 +114,6 @@ ssh -p 2222 root@localhost
 Accede a `http://localhost:3001` y revisa:
 - Gráficas: intentos por día, top IPs, top usernames/paths.  
 - Tabla: últimos eventos (con búsqueda y ordenación).  
-
 
 
 ## 5) API
@@ -178,7 +173,6 @@ Devuelve eventos de manera paginada, con filtros opcionales.
 ```
 
 
-
 ## 6) Esquema de datos
 
 ``` sql
@@ -205,7 +199,6 @@ CREATE INDEX IF NOT EXISTS idx_events_service ON events(service);
 ```
 
 
-
 ## 7) Seguridad
 
 - Honeypot de **baja interacción** (no ejecutar binarios ni comandos).  
@@ -213,7 +206,6 @@ CREATE INDEX IF NOT EXISTS idx_events_service ON events(service);
 - Solo se expone el puerto honeypot.  
 - Retención limitada: se documentará (30–90 días).  
 - Uso exclusivamente didáctico y ético.  
-
 
 
 ## 8) Tests
@@ -230,7 +222,6 @@ Pendiente de añadir:
 pnpm run lint
 pnpm run test
 ```
-
 
 
 ## 9) Problemas y soluciones
@@ -264,11 +255,9 @@ Durante el desarrollo se han identificado y resuelto varios problemas:
   **Solución adoptada:** registrar cada intento de autenticación (comportamiento actual). *(Se puede filtrar en el futuro si se desea.)*
 
 
-
 ## 10) Roadmap
 
-### Próximas tareas (pendientes de MVP)
-- [ ] Implementar servicio honeypot HTTP.  
+### Próximas tareas (pendientes de MVP) 
 - [ ] Añadir tests unitarios, de integración y E2E.  
 - [ ] Configurar CI/CD en GitHub Actions con pnpm.  
 - [ ] Crear Dockerfiles para honeypot, API y dashboard.  
@@ -276,7 +265,6 @@ Durante el desarrollo se han identificado y resuelto varios problemas:
 - [ ] Preparar despliegue en VPS.  
 
 ### Futuro (nivel Pro)
-- [ ] Multi-servicio (SSH + HTTP).  
 - [ ] GeoIP (país/ASN).  
 - [ ] Alertas (Discord/Slack).  
 - [ ] Endpoint `/metrics` (Prometheus).  
@@ -286,7 +274,6 @@ Durante el desarrollo se han identificado y resuelto varios problemas:
 - [ ] TLS con reverse proxy.  
 - [ ] Despliegue infra con Terraform + Ansible.  
 - [ ] Logs firmados / hash chain.  
-
 
 
 ## 11) Decisiones explícitas del alumno
