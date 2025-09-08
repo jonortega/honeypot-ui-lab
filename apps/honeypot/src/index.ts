@@ -1,10 +1,10 @@
-import { startSSHServer } from "./server/ssh";
-// import { startHTTPServer } from "./server/http";
-import { getConfig } from "./config";
+import { startSSHServer } from "./server/ssh.js";
+import { startHTTPServer } from "./server/http.js";
+import { getConfig } from "./config.js";
 
 const services: Record<string, () => void> = {
   ssh: startSSHServer,
-  //   http: startHTTPServer,
+  http: startHTTPServer,
 };
 
 const { HNY_SERVICE } = getConfig();

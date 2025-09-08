@@ -10,7 +10,7 @@ const cjsRequire = createRequire(import.meta.url);
 const { Server } = cjsRequire("ssh2");
 
 export function startSSHServer() {
-  const { HNY_PORT, HNY_HOST_KEY_PATH } = getConfig();
+  const { HNY_SSH_PORT, HNY_HOST_KEY_PATH } = getConfig();
 
   const keyPath = resolve(process.cwd(), HNY_HOST_KEY_PATH);
   let hostKey: Buffer;
@@ -58,7 +58,7 @@ y vuelve a ejecutar.`);
     client.on("end", () => {});
   });
 
-  server.listen(HNY_PORT, "0.0.0.0", () => {
-    console.log(`[hp/ssh] SSH honeypot escuchando en puerto ${HNY_PORT}`);
+  server.listen(HNY_SSH_PORT, "0.0.0.0", () => {
+    console.log(`[hp/ssh] SSH honeypot escuchando en puerto ${HNY_SSH_PORT}`);
   });
 }
