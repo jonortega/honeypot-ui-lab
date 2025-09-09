@@ -118,7 +118,7 @@ Accede a `http://localhost:3001` y revisa:
 
 ## 5) API
 
-> **Auth:** enviar `Authorization: Bearer <HNY_ADMIN_TOKEN>` en cada petición.
+> **Auth:** enviar `Authorization: Bearer <AUTH_TOKEN>` en cada petición.
 
 ### 5.1 Endpoints
 

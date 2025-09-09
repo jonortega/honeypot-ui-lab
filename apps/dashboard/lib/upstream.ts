@@ -1,21 +1,21 @@
-const BASE_API_URL = process.env.BASE_API_URL;
-const API_TOKEN = process.env.HNY_ADMIN_TOKEN;
+const API_BASE_URL = process.env.API_BASE_URL;
+const AUTH_TOKEN = process.env.AUTH_TOKEN;
 
-if (!BASE_API_URL) {
+if (!API_BASE_URL) {
   throw new Error("BASE_API_URL is not set for dashboard server runtime");
 }
-if (!API_TOKEN) {
+if (!AUTH_TOKEN) {
   // Si tu /health no requiere auth, esto explica por qué health=200 y otros=500
-  console.warn("[upstream] HNY_ADMIN_TOKEN is empty. Summary/Events will fail (401).");
+  console.warn("[upstream] AUTH_TOKEN is empty. Summary/Events will fail (401).");
 }
 
 export function upstreamUrl(path: string) {
-  return `${BASE_API_URL}${path}`;
+  return `${API_BASE_URL}${path}`;
 }
 
 export async function fetchUpstream(path: string, init?: RequestInit) {
   const headers = {
-    Authorization: `Bearer ${API_TOKEN}`,
+    Authorization: `Bearer ${AUTH_TOKEN}`,
     "Content-Type": "application/json",
     ...(init?.headers || {}),
   };

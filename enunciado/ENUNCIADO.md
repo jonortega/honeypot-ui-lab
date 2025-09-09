@@ -63,7 +63,7 @@ Se considera **COMPLETADO** cuando cumpla **todo** lo siguiente:
      - `HNY_SERVICE` = `ssh` | `http`
      - `HNY_PORT` (p.ej. 22/80/8080)
      - `HNY_DB_PATH` (p.ej. `./data/events.db`)
-     - `HNY_ADMIN_TOKEN` (token para API)
+     - `AUTH_TOKEN` (token para API)
      - `DASHBOARD_BASE_URL`, `BASE_API_URL`
 
 7. **Seguridad mínima y ética**
@@ -146,7 +146,7 @@ CREATE INDEX IF NOT EXISTS idx_events_service ON events(service);
 ### Endpoints REST (obligatorios)
 - `GET /api/stats/summary` → `{ totalEvents, byDay[], topIPs[], topUsernames[], topPaths[] }`
 - `GET /api/events?limit=50&offset=0&service=ssh|http&ip=...&from=...&to=...`
-- **Auth**: header `Authorization: Bearer <HNY_ADMIN_TOKEN>` (solo lectura).
+- **Auth**: header `Authorization: Bearer <AUTH_TOKEN>` (solo lectura).
 
 ---
 
@@ -187,7 +187,7 @@ honeyscope/
 HNY_SERVICE=ssh        # o http
 HNY_PORT=22            # 22 si ssh, 80/8080 si http
 HNY_DB_PATH=./data/events.db
-HNY_ADMIN_TOKEN=change-me
+AUTH_TOKEN=change-me
 BASE_API_URL=http://api:3000
 DASHBOARD_BASE_URL=http://localhost:3001
 ```

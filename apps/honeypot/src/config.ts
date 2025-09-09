@@ -27,7 +27,7 @@ interface Config {
   HNY_HTTP_PORT: number;
   HNY_DB_PATH: string;
   HNY_HOST_KEY_PATH: string;
-  HNY_ADMIN_TOKEN?: string;
+  AUTH_TOKEN?: string;
 }
 
 let cached: Config | null = null;
@@ -63,7 +63,7 @@ export function getConfig(): Config {
     HNY_HTTP_PORT,
     HNY_DB_PATH,
     HNY_HOST_KEY_PATH,
-    HNY_ADMIN_TOKEN,
+    AUTH_TOKEN,
   } = process.env;
 
   const services = parseServices(HNY_SERVICE);
@@ -82,7 +82,7 @@ export function getConfig(): Config {
     HNY_HTTP_PORT: httpPort,
     HNY_DB_PATH: HNY_DB_PATH || defaultDbPath,
     HNY_HOST_KEY_PATH: HNY_HOST_KEY_PATH || defaultHostKey,
-    HNY_ADMIN_TOKEN,
+    AUTH_TOKEN,
   };
   return cached;
 }

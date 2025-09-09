@@ -28,9 +28,9 @@ if (process.env.NODE_ENV !== "production" && fs.existsSync(localEnvPath)) {
 // Env
 const DB_PATH = path.resolve(rootDir, process.env.HNY_DB_PATH || "/data/events.db");
 const DASHBOARD_ORIGIN = process.env.DASHBOARD_BASE_URL || process.env.BASHBOARD_BASE_URL || "";
-const ADMIN_TOKEN = process.env.HNY_ADMIN_TOKEN;
-if (!ADMIN_TOKEN || ADMIN_TOKEN.length < 24) {
-  throw new Error("HNY_ADMIN_TOKEN is required and must be >= 24 chars");
+const AUTH_TOKEN = process.env.AUTH_TOKEN;
+if (!AUTH_TOKEN || AUTH_TOKEN.length < 24) {
+  throw new Error("AUTH_TOKEN is required and must be >= 24 chars");
 }
 
 // CORS mínimo
@@ -49,7 +49,7 @@ app.use((req, res, next) => {
 });
 
 // Auth
-const authRequired = makeAuthRequired(ADMIN_TOKEN);
+const authRequired = makeAuthRequired(AUTH_TOKEN);
 
 // Health
 app.get("/health", (_req, res) => {
