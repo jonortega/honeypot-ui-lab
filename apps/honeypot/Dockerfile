@@ -37,8 +37,9 @@ COPY apps/honeypot/host.key /app/host.key
 # Propietario y permisos: el proceso corre como 'node' y debe poder leerla
 RUN chown node:node /app/host.key && chmod 600 /app/host.key
 
-# su-exec para hacer drop a usuario 'node'
+# su-exec para hacer drop a usuario 'node' y curl para healthcheck
 RUN apk add --no-cache su-exec
+RUN apk add --no-cache curl
 
 # EntryPoint que fija permisos del volumen y ejecuta como 'node'
 COPY apps/honeypot/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
