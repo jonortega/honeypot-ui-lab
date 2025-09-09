@@ -1,0 +1,46 @@
+# --- VCS ---
+.git
+.gitignore
+
+# --- Env / secrets (conserva los .example) ---
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# --- Node / pnpm / npm / yarn ---
+**/node_modules
+**/.pnpm-store
+**/.npm
+**/.yarn
+pnpm-debug.log*
+npm-debug.log*
+yarn-error.log*
+**/.eslintcache
+
+# --- Builds / outputs / caches ---
+**/dist
+apps/dashboard/.next
+**/.turbo
+**/.cache
+**/coverage
+**/reports
+**/.nyc_output
+**/tmp
+**/logs
+*.log
+
+# --- Tests (opcional; si nunca testeas dentro del Docker build) ---
+**/__tests__/
+**/__mocks__/
+**/*.spec.*
+**/*.test.*
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
