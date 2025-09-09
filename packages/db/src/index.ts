@@ -24,6 +24,14 @@ export const API_STATS_TOP_MAX_LIMIT = Math.max(
   Math.min(Number.parseInt(process.env.HNY_API_STATS_TOP_MAX_LIMIT ?? "", 10) || 50, 200)
 );
 
+// Abre DB en modo readonly con protecciones extra
+function openReadOnly(dbPath: string) {
+  const db = new Database(dbPath, { readonly: true, fileMustExist: true, timeout: 5000 });
+  // Impide escritura SQL en esta conexión (aunque el FS permita locks/WAL)
+  db.pragma("query_only = ON");
+  return db;
+}
+
 // Crea/asegura el esquema de SQLite (events + indices) para arrancar el sistema
 export function bootstrap(dbPath: string): void {
   // Abrimos con timeout para evitar bloqueos prolongados en contención
@@ -162,7 +170,7 @@ export function getEvents(
     return [];
   }
 
-  const db = new Database(dbPath, { readonly: true });
+  const db = openReadOnly(dbPath);
 
   try {
     // SELECT explícito de columnas (evita sorpresas si el esquema cambia)
@@ -247,7 +255,7 @@ export function countEvents(
   dbPath: string,
   q?: { service?: "ssh" | "http"; ip?: string; from?: string; to?: string }
 ): number {
-  const db = new Database(dbPath, { readonly: true });
+  const db = openReadOnly(dbPath);
 
   // Construir la query base
   let sql = "SELECT COUNT(*) AS count FROM events";
@@ -339,7 +347,7 @@ export function getStatsSummary(
 
   const whereClause = where.length ? ` WHERE ${where.join(" AND ")}` : "";
 
-  const db = new Database(dbPath, { readonly: true });
+  const db = openReadOnly(dbPath);
   try {
     // 1) totalEvents
     const totalRow = db.prepare(`SELECT COUNT(*) AS count FROM events${whereClause}`).get(params) as

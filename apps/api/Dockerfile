@@ -32,6 +32,9 @@ ENV NODE_ENV=production
 # Copiamos el paquete “deployado”
 COPY --from=builder /out ./
 
+# curl para healthcheck
+RUN apk add --no-cache curl
+
 USER node
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
