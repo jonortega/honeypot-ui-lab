@@ -12,11 +12,14 @@ COPY apps/api/package.json apps/api/
 COPY packages/db/package.json packages/db/
 # Si añades más workspaces, copia sus package.json aquí
 
-# Pre-resuelve deps de prod de db + api (mejor caché)
-RUN pnpm fetch --prod --filter ./packages/db... --filter ./apps/api...
+# Pre-resuelve deps de db + api (mejor caché)
+RUN pnpm fetch --filter ./packages/db... --filter ./apps/api...
 
 # Ahora sí, el repo completo (respetará .dockerignore)
 COPY . .
+
+# Instala SOLO db + api desde el store (offline), incluyendo devDeps
+RUN pnpm install --filter ./packages/db... --filter ./apps/api... --offline
 
 # Build TS → JS (db y api)
 RUN pnpm -r --filter ./packages/db... --filter ./apps/api... build

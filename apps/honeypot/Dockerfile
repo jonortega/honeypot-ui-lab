@@ -12,11 +12,14 @@ COPY apps/honeypot/package.json apps/honeypot/
 COPY packages/db/package.json packages/db/
 # Si añades más workspaces en el futuro, copia sus package.json aquí
 
-# Pre-resuelve deps de prod de honeypot + db (mejor caché)
-RUN pnpm fetch --prod --filter ./packages/db... --filter ./apps/honeypot...
+# Pre-resuelve deps de honeypot + db (mejor caché)
+RUN pnpm fetch --filter ./packages/db... --filter ./apps/honeypot...
 
 # Ahora sí, el repo completo (respetará .dockerignore)
 COPY . .
+
+# Instala SOLO db + honeypot desde el store (offline), incluyendo devDeps
+RUN pnpm install --filter ./packages/db... --filter ./apps/honeypot... --offline
 
 # Build TS → JS (db y honeypot)
 RUN pnpm -r --filter ./packages/db... --filter ./apps/honeypot... build
@@ -38,8 +41,7 @@ COPY apps/honeypot/host.key /app/host.key
 RUN chown node:node /app/host.key && chmod 600 /app/host.key
 
 # su-exec para hacer drop a usuario 'node' y curl para healthcheck
-RUN apk add --no-cache su-exec
-RUN apk add --no-cache curl
+RUN apk add --no-cache su-exec curl
 
 # EntryPoint que fija permisos del volumen y ejecuta como 'node'
 COPY apps/honeypot/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
