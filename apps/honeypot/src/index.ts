@@ -2,13 +2,16 @@
 import { startSSHServer } from "./server/ssh.js";
 import { startHTTPServer } from "./server/http.js";
 import { getConfig } from "./config.js";
+import { bootstrap } from "db";
 
 const services: Record<string, () => void> = {
   ssh: startSSHServer,
   http: startHTTPServer,
 };
 
-const { HNY_SERVICES } = getConfig();
+const { HNY_SERVICES, HNY_DB_PATH } = getConfig();
+
+bootstrap(HNY_DB_PATH);
 
 for (const svc of HNY_SERVICES) {
   const starter = services[svc];
