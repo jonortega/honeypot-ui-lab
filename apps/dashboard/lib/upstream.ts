@@ -1,24 +1,30 @@
-const API_BASE_URL = process.env.API_BASE_URL;
-const AUTH_TOKEN = process.env.AUTH_TOKEN;
-
-if (!API_BASE_URL) {
-  throw new Error("BASE_API_URL is not set for dashboard server runtime");
-}
-if (!AUTH_TOKEN) {
-  // Si tu /health no requiere auth, esto explica por qué health=200 y otros=500
-  console.warn("[upstream] AUTH_TOKEN is empty. Summary/Events will fail (401).");
+// apps/dashboard/lib/upstream.ts
+function readApiBaseUrl(): string {
+  return process.env.API_BASE_URL || "";
 }
 
-export function upstreamUrl(path: string) {
-  return `${API_BASE_URL}${path}`;
+function readAuthToken(): string {
+  return process.env.AUTH_TOKEN || "";
+}
+
+export function upstreamUrl(path: string): string {
+  const base = readApiBaseUrl();
+  if (!base) {
+    // Importante: fallar SOLO cuando realmente se intenta usar upstream
+    throw new Error("Missing API_BASE_URL at runtime");
+  }
+  return `${base}${path}`;
 }
 
 export async function fetchUpstream(path: string, init?: RequestInit) {
-  const headers = {
-    Authorization: `Bearer ${AUTH_TOKEN}`,
+  const token = readAuthToken();
+
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(init?.headers || {}),
+    ...(init?.headers as Record<string, string> | undefined),
   };
+
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   return fetch(upstreamUrl(path), {
     ...init,

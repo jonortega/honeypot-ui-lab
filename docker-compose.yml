@@ -55,10 +55,21 @@ services:
     env_file:
       - ./.env.compose
       - ./apps/dashboard/.env.local
+    environment:
+      - NEXT_PUBLIC_BASE_API_URL=http://api:3000
+      - NODE_ENV=production
     ports:
       - "3001:3001"
-    depends_on: [api]
+    depends_on:
+      api:
+        condition: service_healthy
     networks: [frontend]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3001/api/internal/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
 volumes:
   db-data:
