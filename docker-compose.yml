@@ -15,6 +15,12 @@ services:
     volumes:
       - db-data:/data
     networks: [ingress]
+    # healthcheck:
+    #   test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+    #   interval: 10s
+    #   timeout: 3s
+    #   retries: 5
+    #   start_period: 10s
 
   api:
     build:
@@ -24,12 +30,20 @@ services:
     env_file:
       - ./.env.compose
       - ./apps/api/.env
+    environment:
+      - NODE_ENV=production
     ports:
       - "3000:3000"
     volumes:
       - db-data:/data:ro
     depends_on: [honeypot]
     networks: [frontend]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   dashboard:
     build:

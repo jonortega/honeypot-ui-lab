@@ -1,10 +1,11 @@
 import * as dotenv from "dotenv";
 import express from "express";
-import { getEvents, countEvents, getStatsSummary } from "../../../packages/db/src/index.js";
+import { getEvents, countEvents, getStatsSummary } from "db";
 import { toInt, parseIso, parseService } from "./validation/validation.js";
 import { makeAuthRequired } from "./middleware/auth.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 
 // __dirname shim para ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -12,22 +13,27 @@ const __dirname = path.dirname(__filename);
 
 // --- Config básica ---
 const app = express();
-app.disable("x-powered-by"); // menos fingerprinting
-app.use(express.json({ limit: "100kb", strict: true })); // no aceptamos bodies grandes (solo GETs)
+app.disable("x-powered-by");
+app.use(express.json({ limit: "100kb", strict: true }));
 
-// Cargar .env.local desde la raíz del repo
-dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
+// Cargar .env.local solo en desarrollo
+const rootDir = path.resolve(__dirname, "../../..");
+const localEnvPath = path.join(rootDir, ".env.local");
+if (process.env.NODE_ENV !== "production" && fs.existsSync(localEnvPath)) {
+  dotenv.config({ path: localEnvPath });
+} else {
+  dotenv.config(); // por si ejecutas local con variables exportadas
+}
 
-// Env (acepta variantes con typos para no romper en local)
-const ROOT_DIR = path.resolve(__dirname, "../../..");
-const DB_PATH = path.resolve(ROOT_DIR, process.env.HNY_DB_PATH || "data/events.db");
+// Env
+const DB_PATH = path.resolve(rootDir, process.env.HNY_DB_PATH || "/data/events.db");
 const DASHBOARD_ORIGIN = process.env.DASHBOARD_BASE_URL || process.env.BASHBOARD_BASE_URL || "";
 const ADMIN_TOKEN = process.env.HNY_ADMIN_TOKEN;
 if (!ADMIN_TOKEN || ADMIN_TOKEN.length < 24) {
   throw new Error("HNY_ADMIN_TOKEN is required and must be >= 24 chars");
 }
 
-// CORS mínimo (sin dependencia extra)
+// CORS mínimo
 app.use((req, res, next) => {
   if (DASHBOARD_ORIGIN) {
     const origin = req.headers.origin as string | undefined;
@@ -42,16 +48,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- Función de validación de auth ---
+// Auth
 const authRequired = makeAuthRequired(ADMIN_TOKEN);
 
-// --- Health básico ---
+// Health
 app.get("/health", (_req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   res.json({ ok: true });
 });
 
-// --- GET /api/events ---
+// GET /api/events
 // Lista paginada + total filtrado. Usa getEvents() y countEvents().
 app.get("/api/events", authRequired, (req, res) => {
   console.log("[api] GET /api/events", {
@@ -65,7 +71,7 @@ app.get("/api/events", authRequired, (req, res) => {
   });
 
   // 1) Validar/sanear query
-  const limit = toInt(req.query.limit, 50, { min: 1, max: 10_000 }); // el clamp real se hace en la capa DB
+  const limit = toInt(req.query.limit, 50, { min: 1, max: 10_000 });
   const offset = toInt(req.query.offset, 0, { min: 0, max: 100_000_000 });
   const service = parseService(req.query.service);
   const ip = typeof req.query.ip === "string" && req.query.ip.length <= 255 ? req.query.ip : undefined;
@@ -80,17 +86,17 @@ app.get("/api/events", authRequired, (req, res) => {
   // 3) Construir filtros seguros
   const filters = { service, ip, from, to };
 
-  // 4) Consultar DB (total + items). La capa DB ya aplica clamps y SQL parametrizado.
+  // 4) Consultar DB (total + items)
   const total = countEvents(DB_PATH, filters);
   const items = getEvents(DB_PATH, { ...filters, limit, offset });
 
-  // 5) Responder (no reflejar inputs sin validar en cabeceras)
+  // 5) Responder
   res.setHeader("Cache-Control", "no-store, private");
   res.type("application/json; charset=utf-8");
   res.status(200).json({ total, limit, offset, items });
 });
 
-// --- GET /api/stats/summary ---
+// GET /api/stats/summary
 // Agregados: totalEvents, byDay[], topIPs[], topUsernames[], topPaths[]
 app.get("/api/stats/summary", authRequired, (req, res) => {
   // 1) Validar/sanear filtros
@@ -116,18 +122,18 @@ app.get("/api/stats/summary", authRequired, (req, res) => {
   res.status(200).json(summary);
 });
 
-// --- 404 ---
+// 404
 app.use((_req, res) => {
   res.status(404).json({ error: "not_found" });
 });
 
-// --- Error handler (mensaje genérico, log interno) ---
+// Error handler
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("[api:error]", err);
   res.status(500).json({ error: "internal_error" });
 });
 
-// --- Arranque ---
+// Arranque
 const port = Number(process.env.API_PORT ?? 3000);
 app.listen(port, () => {
   console.log(`[api] listening on http://localhost:${port}`);
