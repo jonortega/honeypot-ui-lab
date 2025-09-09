@@ -15,6 +15,17 @@ export function startHTTPServer() {
   app.set("trust proxy", TRUST_PROXY);
   app.use(securityHeaders);
 
+  // Health (solo local)
+  app.get("/health", (req, res) => {
+    // Solo permitir desde dentro del contenedor
+    const ra = req.socket.remoteAddress || "";
+    const isLocal = ra === "127.0.0.1" || ra === "::1" || ra === "::ffff:127.0.0.1";
+    if (!isLocal) return res.status(404).end();
+
+    res.setHeader("Cache-Control", "no-store, private");
+    res.status(200).json({ ok: true });
+  });
+
   // Log de cada request (sin cuerpos)
   app.use((req, _res, next) => {
     const ip = clientIp(req);
