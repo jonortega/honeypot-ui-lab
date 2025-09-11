@@ -1,15 +1,13 @@
 "use client";
 
-import { Shield, Activity, Globe, Settings, AlertTriangle, Menu, X } from "lucide-react";
+import { Shield, Activity, BarChart3, Settings, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useHealth } from "@/hooks/use-api";
+import { useState } from "react";
 
 const navigation = [
-  { name: "Overview", icon: Activity, current: true },
-  { name: "SSH Attacks", icon: Shield, current: false },
-  { name: "HTTP Attacks", icon: Globe, current: false },
-  { name: "Alerts", icon: AlertTriangle, current: false },
-  { name: "Settings", icon: Settings, current: false },
+  { name: "Overview", icon: Activity, current: true, href: "#overview" },
+  { name: "Analytics", icon: BarChart3, current: false, href: "#analytics" },
+  { name: "Settings", icon: Settings, current: false, href: "#settings" },
 ];
 
 interface SidebarProps {
@@ -18,7 +16,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const { data: health } = useHealth();
+  const [currentTab, setCurrentTab] = useState("Overview");
 
   return (
     <div
@@ -41,13 +39,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       <nav className='flex-1 px-4 space-y-1'>
         {navigation.map((item) => (
-          <a
+          <button
             key={item.name}
-            href='#'
+            onClick={() => setCurrentTab(item.name)}
             className={cn(
-              "group flex items-center text-sm font-medium rounded-md transition-smooth relative",
+              "group flex items-center text-sm font-medium rounded-md transition-smooth relative w-full",
               collapsed ? "px-2 py-3 justify-center" : "px-3 py-2",
-              item.current
+              currentTab === item.name
                 ? "bg-accent text-accent-foreground shadow-sm"
                 : "text-sidebar-foreground hover:bg-accent/10 hover:text-accent hover:shadow-sm"
             )}
@@ -56,11 +54,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className={cn(
                 "h-5 w-5 flex-shrink-0 transition-smooth",
                 collapsed ? "" : "mr-3",
-                item.current ? "text-accent-foreground" : "text-sidebar-foreground/60 group-hover:text-accent"
+                currentTab === item.name
+                  ? "text-accent-foreground"
+                  : "text-sidebar-foreground/60 group-hover:text-accent"
               )}
             />
             {!collapsed && item.name}
-          </a>
+          </button>
         ))}
       </nav>
 
@@ -82,17 +82,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             </>
           )}
         </button>
-      </div>
-
-      <div className='p-4 border-t border-sidebar-border'>
-        <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
-          <div className={cn("h-2 w-2 rounded-full transition-colors", health?.ok ? "bg-success" : "bg-destructive")} />
-          {!collapsed && (
-            <span className='text-sm text-sidebar-foreground/60'>
-              {health?.ok ? "System Online" : "System Offline"}
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );

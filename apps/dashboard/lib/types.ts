@@ -48,7 +48,7 @@ export interface HealthResponse {
 }
 
 export interface EventFilters {
-  service?: "ssh" | "http";
+  service?: "ssh" | "http" | "all";
   ip?: string;
   from?: string;
   to?: string;
