@@ -5,41 +5,10 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEvents, useHealth, useStats } from "@/hooks/use-api";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 
 export function Header() {
-  const { data: stats, mutate: refreshStats, error: statsError } = useStats();
-  const { data: health, mutate: refreshHealth, error: healthError } = useHealth();
-
-  const {
-    data: events,
-    mutate: refreshEvents,
-    error: eventsError,
-  } = useEvents({
-    limit: 50,
-    // service: serviceFilter === "all" ? undefined : (serviceFilter as "ssh" | "http"),
-  });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshHealth();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [refreshHealth]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshStats();
-      refreshEvents();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [refreshStats, refreshEvents]);
-
-  const handleRefresh = () => {
-    refreshStats();
-    refreshEvents();
-    refreshHealth();
-  };
+  const { health, statsError, eventsError, healthError, refreshAll } = useDashboardData();
 
   return (
     <header className='bg-card border-b border-border px-6 py-4'>
@@ -60,7 +29,7 @@ export function Header() {
           <Button
             variant='outline'
             size='sm'
-            onClick={handleRefresh}
+            onClick={refreshAll}
             // disabled={isLoading}
             className='hover:bg-accent/10 hover:text-accent hover:border-accent transition-smooth bg-transparent'
           >
