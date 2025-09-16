@@ -55,3 +55,38 @@ export interface EventFilters {
   limit?: number;
   offset?: number;
 }
+
+export type ServiceFilter = "all" | "ssh" | "http";
+export type StatusFilter = "all" | "success" | "failed";
+export type TimeRange = "24h" | "7d" | "custom";
+
+export type PropsEventsTable = {
+  /** Datos traídos por el padre con useEvents(filters) */
+  eventsData:
+    | {
+        items: EventItem[];
+        total: number;
+        limit: number;
+        offset: number;
+      }
+    | undefined;
+  isLoading: boolean;
+  error: unknown;
+
+  /** Filtros server-driven y su setter (para paginación principalmente) */
+  filters: EventFilters;
+  setFilters: React.Dispatch<React.SetStateAction<EventFilters>>;
+
+  /** Filtros/UI state controlados por el padre */
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+
+  statusFilter: StatusFilter;
+  setStatusFilter: (v: StatusFilter) => void;
+
+  serviceFilter: ServiceFilter;
+  setServiceFilter: (v: ServiceFilter) => void;
+
+  timeRange: TimeRange;
+  setTimeRange: (v: TimeRange) => void;
+};

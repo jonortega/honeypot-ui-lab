@@ -1,94 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useEvents } from "@/hooks/use-api";
+import { cn, isLikelyIP, statusIsSuccess } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import type { EventFilters, EventItem } from "@/lib/types";
+import type { PropsEventsTable, ServiceFilter, StatusFilter, TimeRange } from "@/lib/types";
 
-/**
- * Helpers
- */
-const isLikelyIP = (term: string) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(term.trim()) || /^[0-9a-f:]+$/i.test(term.trim()); // ipv4 or ipv6 (very loose)
-
-type ServiceFilter = "all" | "ssh" | "http";
-type StatusFilter = "all" | "success" | "failed";
-type TimeRange = "24h" | "7d" | "custom";
-
-function rangeToFromTo(range: TimeRange): { from?: string; to?: string } {
-  const now = new Date();
-  if (range === "24h") {
-    const d = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    return { from: d.toISOString(), to: now.toISOString() };
-  }
-  if (range === "7d") {
-    const d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    return { from: d.toISOString(), to: now.toISOString() };
-  }
-  // "custom": no cambiamos filtros de fecha aquí (podrás añadir datepicker luego)
-  return {};
-}
-
-function statusIsSuccess(http_status?: number | null): boolean | undefined {
-  if (typeof http_status !== "number") return undefined;
-  return http_status >= 100 && http_status < 400;
-}
-
-export function RecentEventsTable() {
-  // --- Server-driven filters (se reflejan en la llamada a useEvents) ---
-  const [filters, setFilters] = useState<EventFilters>({
-    limit: 50,
-    offset: 0,
-    // service?: "ssh" | "http"
-    // ip?: string
-    // from?: string
-    // to?: string
-  });
-
-  // --- UI state (se mezclan con filtros o se aplican en cliente) ---
-  const [searchTerm, setSearchTerm] = useState("");
-  const [serviceFilter, setServiceFilter] = useState<ServiceFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [timeRange, setTimeRange] = useState<TimeRange>("24h");
-
-  // Sincroniza serviceFilter -> filters.service (server)
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      service: serviceFilter === "all" ? undefined : serviceFilter,
-      offset: 0,
-    }));
-  }, [serviceFilter]);
-
-  // Sincroniza timeRange -> filters.from/to (server)
-  useEffect(() => {
-    const { from, to } = rangeToFromTo(timeRange);
-    setFilters((prev) => ({
-      ...prev,
-      from,
-      to,
-      offset: 0,
-    }));
-  }, [timeRange]);
-
-  // Search:
-  // - Si parece IP, lo mandamos al server como filters.ip para que haga la query allí.
-  // - Si no parece IP, hacemos filtrado en cliente (por username/path).
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      ip: isLikelyIP(searchTerm) ? searchTerm.trim() : undefined,
-      offset: 0,
-    }));
-  }, [searchTerm]);
-
-  const { data: eventsData, isLoading, error } = useEvents(filters);
-
+export function RecentEventsTable({
+  eventsData,
+  isLoading,
+  error,
+  filters,
+  setFilters,
+  searchTerm,
+  setSearchTerm,
+  statusFilter,
+  setStatusFilter,
+  serviceFilter,
+  setServiceFilter,
+  timeRange,
+  setTimeRange,
+}: PropsEventsTable) {
+  /** Derivados de datos/paginación */
   const events = eventsData?.items ?? [];
   const total = eventsData?.total ?? 0;
   const limit = eventsData?.limit ?? filters.limit ?? 50;
@@ -97,25 +34,22 @@ export function RecentEventsTable() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const currentPage = Math.floor(offset / limit) + 1;
 
-  // Filtrado en cliente para:
-  // - statusFilter (success/failed sobre http_status)
-  // - searchTerm cuando NO es IP (busca en username y http_path)
+  /** Filtrado en cliente:
+   *  - statusFilter (success/failed sobre http_status)
+   *  - searchTerm cuando NO es IP (busca en username/http_path/src_ip)
+   *  Nota: si el searchTerm parece IP, el padre debe pasar filters.ip al server (recomendado).
+   */
   const filteredEvents = useMemo(() => {
     let out = events.slice();
 
-    // Filtro por "success/failed" SOLO para eventos HTTP que tengan http_status
     if (statusFilter !== "all") {
       out = out.filter((e) => {
         const s = statusIsSuccess(e.http_status);
-        if (s === undefined) {
-          // Eventos SSH o HTTP sin status -> no entran ni en success ni en failed
-          return false;
-        }
+        if (s === undefined) return false; // SSH o HTTP sin status -> no cuentan
         return statusFilter === "success" ? s === true : s === false;
       });
     }
 
-    // Filtro por término de búsqueda cuando NO es IP (cliente)
     if (searchTerm && !isLikelyIP(searchTerm)) {
       const term = searchTerm.toLowerCase();
       out = out.filter((e) => {
@@ -129,6 +63,7 @@ export function RecentEventsTable() {
     return out;
   }, [events, statusFilter, searchTerm]);
 
+  /** Paginación (server-driven) */
   const handlePageChange = (newOffset: number) => {
     setFilters((prev) => ({
       ...prev,
@@ -136,37 +71,35 @@ export function RecentEventsTable() {
     }));
   };
 
-  // Skeleton de carga
-  // if (isLoading) {
-  //   return (
-  //     <Card className='animate-pulse'>
-  //       <CardHeader>
-  //         <div className='h-6 bg-muted rounded w-1/4' />
-  //       </CardHeader>
-  //       <CardContent>
-  //         <div className='space-y-4'>
-  //           {Array.from({ length: 6 }).map((_, i) => (
-  //             <div key={i} className='h-12 bg-muted rounded' />
-  //           ))}
-  //         </div>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <Card className='animate-pulse'>
+        <CardHeader>
+          <div className='h-6 bg-muted rounded w-1/4' />
+        </CardHeader>
+        <CardContent>
+          <div className='space-y-4'>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className='h-12 bg-muted rounded' />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  // Error
-  // if (error) {
-  //   return (
-  //     <Card className='border-destructive'>
-  //       <CardHeader>
-  //         <CardTitle>Recent Events</CardTitle>
-  //       </CardHeader>
-  //       <CardContent>
-  //         <p className='text-destructive'>Failed to load events</p>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
+  if (error) {
+    return (
+      <Card className='border-destructive'>
+        <CardHeader>
+          <CardTitle>Recent Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className='text-destructive'>Failed to load events</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -174,7 +107,7 @@ export function RecentEventsTable() {
         <div className='flex items-center justify-between'>
           <CardTitle>Recent Events</CardTitle>
 
-          {/* Filtros (Search, Service, Status, Time Range, Export) */}
+          {/* Controles (Search, Service, Status, Time Range, Export) */}
           <div className='flex items-center space-x-2'>
             {/* Search */}
             <div className='relative'>
@@ -187,7 +120,7 @@ export function RecentEventsTable() {
               />
             </div>
 
-            {/* Service */}
+            {/* Service (afecta al server: el padre debe reconstruir useEvents con serviceFilter) */}
             <select
               className={cn(
                 "h-9 rounded-md border bg-background px-3 text-sm",
@@ -201,7 +134,7 @@ export function RecentEventsTable() {
               <option value='http'>HTTP</option>
             </select>
 
-            {/* Status */}
+            {/* Status (cliente) */}
             <select
               className={cn(
                 "h-9 rounded-md border bg-background px-3 text-sm",
@@ -215,7 +148,7 @@ export function RecentEventsTable() {
               <option value='failed'>Failed (HTTP ≥ 400)</option>
             </select>
 
-            {/* Time range */}
+            {/* Time range (afecta al server: el padre debe mapear a from/to) */}
             <select
               className={cn(
                 "h-9 rounded-md border bg-background px-3 text-sm",
@@ -234,7 +167,7 @@ export function RecentEventsTable() {
               variant='outline'
               size='sm'
               onClick={() => {
-                /* TODO: wire export later */
+                // TODO: wire export later
               }}
             >
               <Download className='h-4 w-4 mr-2' />
@@ -259,7 +192,7 @@ export function RecentEventsTable() {
               </tr>
             </thead>
             <tbody>
-              {filteredEvents.map((event: EventItem) => {
+              {filteredEvents.map((event) => {
                 const httpStatusText = typeof event.http_status === "number" ? String(event.http_status) : "—";
                 const ok = statusIsSuccess(event.http_status);
 

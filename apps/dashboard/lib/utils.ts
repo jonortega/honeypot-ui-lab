@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { TimeRange } from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -42,4 +43,26 @@ export function formatDate(dateLike: unknown, opts: Intl.DateTimeFormatOptions =
 
 export function formatNumber(num: number) {
   return new Intl.NumberFormat("en-US").format(num);
+}
+
+export const isLikelyIP = (term: string) =>
+  /^(?:\d{1,3}\.){3}\d{1,3}$/.test(term.trim()) || /^[0-9a-f:]+$/i.test(term.trim()); // ipv4 or ipv6 (very loose)
+
+export function rangeToFromTo(range: TimeRange): { from?: string; to?: string } {
+  const now = new Date();
+  if (range === "24h") {
+    const d = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return { from: d.toISOString(), to: now.toISOString() };
+  }
+  if (range === "7d") {
+    const d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return { from: d.toISOString(), to: now.toISOString() };
+  }
+  // "custom": no cambiamos filtros de fecha aquí (podrás añadir datepicker luego)
+  return {};
+}
+
+export function statusIsSuccess(http_status?: number | null): boolean | undefined {
+  if (typeof http_status !== "number") return undefined;
+  return http_status >= 100 && http_status < 400;
 }
