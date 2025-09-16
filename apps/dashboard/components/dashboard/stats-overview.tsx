@@ -83,32 +83,32 @@ export function StatsOverview() {
     [stats.topUsernames]
   );
 
-  // if (isLoading) {
-  //   return (
-  //     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-  //       {Array.from({ length: 4 }).map((_, i) => (
-  //         <Card key={i} className='animate-pulse'>
-  //           <CardHeader className='pb-2'>
-  //             <div className='h-4 bg-muted rounded w-3/4' />
-  //           </CardHeader>
-  //           <CardContent>
-  //             <div className='h-8 bg-muted rounded w-1/2' />
-  //           </CardContent>
-  //         </Card>
-  //       ))}
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className='animate-pulse'>
+            <CardHeader className='pb-2'>
+              <div className='h-4 bg-muted rounded w-3/4' />
+            </CardHeader>
+            <CardContent>
+              <div className='h-8 bg-muted rounded w-1/2' />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
-  // if (error) {
-  //   return (
-  //     <Card className='border-destructive'>
-  //       <CardContent className='pt-6'>
-  //         <p className='text-destructive'>Failed to load statistics</p>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
+  if (error) {
+    return (
+      <Card className='border-destructive'>
+        <CardContent className='pt-6'>
+          <p className='text-destructive'>Failed to load statistics</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const statCards = [
     {
