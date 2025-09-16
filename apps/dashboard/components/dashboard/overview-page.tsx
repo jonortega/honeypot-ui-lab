@@ -1,106 +1,37 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, Download } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStats, useEvents, useHealth } from "@/hooks/use-api";
 import { cn } from "@/lib/utils";
-import type { Event } from "@/lib/types";
+import type { EventItem } from "@/lib/types";
+import { RecentEventsTable } from "./recent-events-table";
+import { StatsOverview } from "./stats-overview";
 
 interface OverviewPageProps {
   className?: string;
 }
 
 export function OverviewPage({ className }: OverviewPageProps) {
-  const { data: stats, mutate: refreshStats, error: statsError } = useStats();
-  const { data: health, mutate: refreshHealth, error: healthError } = useHealth();
-  const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [timeRange, setTimeRange] = useState<string>("24h");
   const [searchTerm, setSearchTerm] = useState("");
-
-  const {
-    data: events,
-    mutate: refreshEvents,
-    error: eventsError,
-  } = useEvents({
-    limit: 50,
-    service: serviceFilter === "all" ? undefined : (serviceFilter as "ssh" | "http"),
-  });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshHealth();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [refreshHealth]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshStats();
-      refreshEvents();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [refreshStats, refreshEvents]);
-
-  const handleRefresh = () => {
-    refreshStats();
-    refreshEvents();
-    refreshHealth();
-  };
-
   const filteredEvents =
-    events?.items?.filter((event: Event) => {
+    event?.items?.filter((event: EventItem) => {
       const matchesSearch =
         searchTerm === "" ||
-        event.sourceIp?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.src_ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.path?.toLowerCase().includes(searchTerm.toLowerCase());
+        event.http_path?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === "all" || event.status === statusFilter;
+      const matchesStatus = statusFilter === "all" || event.http_status === statusFilter;
 
       return matchesSearch && matchesStatus;
     }) || [];
 
   return (
     <div className={cn("space-y-6", className)}>
-      {(statsError || eventsError || healthError) && (
-        <div className='bg-destructive/10 border border-destructive/20 rounded-md p-4'>
-          <div className='flex items-center space-x-2'>
-            <div className='h-2 w-2 rounded-full bg-destructive' />
-            <span className='text-sm text-destructive-foreground'>
-              Unable to connect to honeypot API. Please check your environment variables (API_BASE_URL and API_TOKEN) in
-              Project Settings.
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold text-foreground'>Security Overview</h1>
-          <p className='text-muted-foreground'>Real-time honeypot monitoring and threat analysis</p>
-        </div>
-        <div className='flex items-center space-x-4'>
-          <div className='flex items-center space-x-2'>
-            <div
-              className={cn("h-3 w-3 rounded-full transition-colors", health?.ok ? "bg-success" : "bg-destructive")}
-            />
-            <span className='text-sm text-muted-foreground'>{health?.ok ? "Service Online" : "Service Offline"}</span>
-          </div>
-          <Button onClick={handleRefresh} variant='outline' size='sm' className='hover:bg-accent/10 bg-transparent'>
-            <RefreshCw className='h-4 w-4 mr-2' />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+      {/* Stats Overview */}
+      <StatsOverview />
+      {/* <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
         <Card className='hover:shadow-lg transition-shadow'>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-muted-foreground'>Total Events</CardTitle>
@@ -142,9 +73,10 @@ export function OverviewPage({ className }: OverviewPageProps) {
             <div className='text-sm text-muted-foreground'>{stats?.topUsernames?.[0]?.count} attempts</div>
           </CardContent>
         </Card>
-      </div>
-
-      <Card>
+      </div> */}
+      {/* Recent Events Table */}
+      <RecentEventsTable />
+      {/* <Card>
         <CardHeader>
           <div className='flex items-center justify-between'>
             <CardTitle>Recent Events</CardTitle>
@@ -206,9 +138,9 @@ export function OverviewPage({ className }: OverviewPageProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEvents.map((event: Event, index: number) => (
+              {filteredEvents.map((event: EventItem, index: number) => (
                 <TableRow key={event.id || index} className='hover:bg-muted/50'>
-                  <TableCell className='font-mono text-sm'>{new Date(event.timestamp).toLocaleString()}</TableCell>
+                  <TableCell className='font-mono text-sm'>{new Date(event.ts_utc).toLocaleString()}</TableCell>
                   <TableCell>
                     <Badge
                       variant='outline'
@@ -220,13 +152,13 @@ export function OverviewPage({ className }: OverviewPageProps) {
                       {event.service?.toUpperCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell className='font-mono'>{event.sourceIp}</TableCell>
-                  <TableCell className='font-mono text-sm'>{event.path || "-"}</TableCell>
+                  <TableCell className='font-mono'>{event.src_ip}</TableCell>
+                  <TableCell className='font-mono text-sm'>{event.http_path || "-"}</TableCell>
                   <TableCell className='font-mono'>{event.username || "-"}</TableCell>
                   <TableCell className='font-mono'>{event.password || "-"}</TableCell>
                   <TableCell>
-                    <Badge variant={event.status === "failed" ? "destructive" : "default"} className='capitalize'>
-                      {event.status}
+                    <Badge variant={event.http_status === "failed" ? "destructive" : "default"} className='capitalize'>
+                      {event.http_status}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -237,7 +169,7 @@ export function OverviewPage({ className }: OverviewPageProps) {
             <div className='text-center py-8 text-muted-foreground'>No events found matching your filters.</div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

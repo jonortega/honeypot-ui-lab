@@ -1,10 +1,10 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { DashboardContent } from "@/components/dashboard/dashboard-content";
+import { OverviewPage } from "@/components/dashboard/overview-page";
 
 export default function HomePage() {
   return (
     <DashboardLayout>
-      <DashboardContent />
+      <OverviewPage />
     </DashboardLayout>
   );
 }
