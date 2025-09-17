@@ -58,7 +58,7 @@ export function rangeToFromTo(range: TimeRange): { from?: string; to?: string } 
     const d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     return { from: d.toISOString(), to: now.toISOString() };
   }
-  // "custom": no cambiamos filtros de fecha aquí (podrás añadir datepicker luego)
+  // "all": no cambiamos filtros de fecha aquí (podrás añadir datepicker luego)
   return {};
 }
 

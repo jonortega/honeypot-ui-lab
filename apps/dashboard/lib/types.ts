@@ -58,7 +58,7 @@ export interface EventFilters {
 
 export type ServiceFilter = "all" | "ssh" | "http";
 export type StatusFilter = "all" | "success" | "failed";
-export type TimeRange = "24h" | "7d" | "custom";
+export type TimeRange = "24h" | "7d" | "all";
 
 export type PropsEventsTable = {
   /** Datos traídos por el padre con useEvents(filters) */

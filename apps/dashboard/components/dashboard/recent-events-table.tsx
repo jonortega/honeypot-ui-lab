@@ -159,7 +159,7 @@ export function RecentEventsTable({
             >
               <option value='24h'>Last 24h</option>
               <option value='7d'>Last 7 days</option>
-              <option value='custom'>Custom</option>
+              <option value='all'>All Time</option>
             </select>
 
             {/* Export (placeholder) */}

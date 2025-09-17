@@ -6,7 +6,7 @@ import type { EventFilters } from "@/lib/types";
 
 type ServiceFilter = "all" | "ssh" | "http";
 type StatusFilter = "all" | "success" | "failed";
-type TimeRange = "24h" | "7d" | "custom";
+type TimeRange = "24h" | "7d" | "all";
 
 type DashboardDataContextValue = {
   // Datos
@@ -20,10 +20,19 @@ type DashboardDataContextValue = {
         offset: number;
       }
     | undefined;
-  isEventsLoading: boolean;
+
+  // Errores
   eventsError: Error | undefined;
   statsError: Error | undefined;
   healthError: Error | undefined;
+
+  // Loading flags
+  isEventsLoading: boolean;
+  isEventsValidating: boolean;
+  isStatsValidating: boolean;
+  isHealthValidating: boolean;
+  isRefreshing: boolean; // <-- manual refresh en curso
+  isLoadingAny: boolean; // <-- combinado útil para el Header
 
   // Filtros server-driven
   filters: EventFilters;
@@ -43,7 +52,7 @@ type DashboardDataContextValue = {
   setTimeRange: (v: TimeRange) => void;
 
   // Acciones
-  refreshAll: () => void;
+  refreshAll: () => Promise<void>;
 };
 
 const DashboardDataContext = createContext<DashboardDataContextValue | null>(null);
@@ -77,11 +86,18 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [serviceFilter, setServiceFilter] = useState<ServiceFilter>("all");
-  const [timeRange, setTimeRange] = useState<TimeRange>("24h");
+  const [timeRange, setTimeRange] = useState<TimeRange>("all");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Hooks de datos
-  const { data: stats, mutate: refreshStats, error: statsError } = useStats();
-  const { data: health, mutate: refreshHealth, error: healthError } = useHealth();
+  const { data: stats, mutate: refreshStats, error: statsError, isValidating: isStatsValidating = false } = useStats();
+
+  const {
+    data: health,
+    mutate: refreshHealth,
+    error: healthError,
+    isValidating: isHealthValidating = false,
+  } = useHealth();
 
   // Combinamos filtros para useEvents:
   const eventsQuery = useMemo(() => {
@@ -96,14 +112,15 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
 
   const {
     data: eventsData,
-    isLoading: isEventsLoading,
+    isLoading: isEventsLoading = false,
+    isValidating: isEventsValidating = false,
     error: eventsError,
     mutate: refreshEvents,
   } = useEvents(eventsQuery);
 
   // Auto-refresh: health (15s)
   useEffect(() => {
-    const id = setInterval(() => refreshHealth(), 15000);
+    const id = setInterval(() => refreshHealth(), 3000);
     return () => clearInterval(id);
   }, [refreshHealth]);
 
@@ -116,32 +133,46 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
     return () => clearInterval(id);
   }, [refreshStats, refreshEvents]);
 
-  const refreshAll = () => {
-    refreshStats();
-    refreshEvents();
-    refreshHealth();
+  const refreshAll = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshStats(), refreshEvents(), refreshHealth()]);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  const value: DashboardDataContextValue = {
-    stats,
-    health,
-    eventsData,
-    isEventsLoading,
-    eventsError,
-    statsError,
-    healthError,
-    filters,
-    setFilters,
-    searchTerm,
-    setSearchTerm,
-    statusFilter,
-    setStatusFilter,
-    serviceFilter,
-    setServiceFilter,
-    timeRange,
-    setTimeRange,
-    refreshAll,
-  };
+  const isLoadingAny = isRefreshing || isEventsLoading || isEventsValidating || isStatsValidating || isHealthValidating;
 
-  return <DashboardDataContext.Provider value={value}>{children}</DashboardDataContext.Provider>;
+  return (
+    <DashboardDataContext.Provider
+      value={{
+        stats,
+        health,
+        eventsData,
+        eventsError,
+        statsError,
+        healthError,
+        isEventsLoading,
+        isEventsValidating,
+        isStatsValidating,
+        isHealthValidating,
+        isRefreshing,
+        isLoadingAny,
+        filters,
+        setFilters,
+        searchTerm,
+        setSearchTerm,
+        statusFilter,
+        setStatusFilter,
+        serviceFilter,
+        setServiceFilter,
+        timeRange,
+        setTimeRange,
+        refreshAll,
+      }}
+    >
+      {children}
+    </DashboardDataContext.Provider>
+  );
 }

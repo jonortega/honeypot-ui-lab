@@ -1,14 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-
-import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 
 export function Header() {
-  const { health, statsError, eventsError, healthError, refreshAll } = useDashboardData();
+  const { health, statsError, eventsError, healthError, refreshAll, isRefreshing } = useDashboardData();
+
+  const hasError = Boolean(statsError || eventsError || healthError);
 
   return (
     <header className='bg-card border-b border-border px-6 py-4'>
@@ -30,17 +30,17 @@ export function Header() {
             variant='outline'
             size='sm'
             onClick={refreshAll}
-            // disabled={isLoading}
+            disabled={isRefreshing}
+            aria-busy={isRefreshing}
             className='hover:bg-accent/10 hover:text-accent hover:border-accent transition-smooth bg-transparent'
           >
-            {/* <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> */}
-            <RefreshCw className={cn("h-4 w-4 mr-2")} />
+            <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
             Refresh
           </Button>
         </div>
       </div>
       <div className='mt-3'>
-        {(statsError || eventsError || healthError) && (
+        {hasError && (
           <div className='bg-destructive/10 border border-destructive/20 rounded-md p-4'>
             <div className='flex items-center space-x-2'>
               <div className='h-2 w-2 rounded-full bg-destructive' />
